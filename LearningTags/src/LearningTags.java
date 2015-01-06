@@ -203,7 +203,7 @@ public class LearningTags {
               alphas.put(new Triplet<Integer, Integer, String>(sentenceCounter, 1, b), Math.exp(part1 + part2));
             }
             // recurrence
-            for (int k = 1; k < sentence.length(); k++) {
+            for (int k = 1; k <= sentence.length() - 1; k++) {
               double newValue = 0;
               for (String b : POSes) {
                 for (String a : POSes) {
@@ -240,12 +240,12 @@ public class LearningTags {
                   betas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, a), newValue);
                 }
               } else {
-                for (String a : POSes) {
+                for (String b : POSes) {
                   // part1 = theta_e(a, xs.get(k))
-                  double part1 = theta[indexEmission(POSIndex.get(y0), wordIndex.get(xs.get(k)))];
+                  double part1 = theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k)))];
                   // part2 = theta_t(a, y0)
-                  double part2 = theta[indexTransition(POSIndex.get(a), POSIndex.get(y0))];
-                  newValue += betas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, a))*Math.exp(part1 + part2);
+                  double part2 = theta[indexTransition(POSIndex.get(y0), POSIndex.get(b))];
+                  newValue += betas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, y0))*Math.exp(part1 + part2);
                 }
 
                 betas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, y0), newValue);
@@ -253,6 +253,7 @@ public class LearningTags {
             }
 
             double Z = betas.get(new Triplet<Integer, Integer, String>(sentenceCounter, 0, y0));
+            System.out.println("Z = " + Z);
             Zs.add(Z);
             sentenceCounter += 1;
           }
@@ -386,7 +387,7 @@ public class LearningTags {
         Fmt.D(state.gradient()));
       if(maximizer.takeStep(state)) break;
     }
-    Execution.finish();
+    // Execution.finish();
 
     double[] thetaTemp = state.point();
     for(int i = 0; i < D; i++)
@@ -394,7 +395,9 @@ public class LearningTags {
       finalTheta[i] = thetaTemp[i];
     }
     System.out.println("^^^^^^^^^");
-    System.out.println(finalTheta);
+    for(int i = 0; i < D; i++) {
+      System.out.print(finalTheta[i] + " ");
+    }
     System.out.println("^^^^^^^^^");
   }
 
