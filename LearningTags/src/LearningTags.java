@@ -213,6 +213,7 @@ public class LearningTags {
                   double part2 = theta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
                   newValue += alphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, a))*Math.exp(part1 + part2);
                 }
+                System.out.println("alpha = " + newValue);
                 alphas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k + 1, b), newValue);
               }
             }
@@ -234,9 +235,11 @@ public class LearningTags {
                     double part1 = theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k)))];
                     // part2 = theta_t(a, b)
                     double part2 = theta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
-                    newValue += betas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, a))*Math.exp(part1 + part2);
+                    newValue += betas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, b))*Math.exp(part1 + part2);
                   }
 
+                  System.out.println("beta = " + newValue);
+                  System.out.println("k = " + k);
                   betas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, a), newValue);
                 }
               } else {
@@ -245,9 +248,9 @@ public class LearningTags {
                   double part1 = theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k)))];
                   // part2 = theta_t(a, y0)
                   double part2 = theta[indexTransition(POSIndex.get(y0), POSIndex.get(b))];
-                  newValue += betas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, y0))*Math.exp(part1 + part2);
+                  newValue += betas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, b))*Math.exp(part1 + part2);
                 }
-
+                System.out.println("*********************************** " + newValue);
                 betas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, y0), newValue);
               }
             }
@@ -318,6 +321,7 @@ public class LearningTags {
                   }
 
                     // subtract \I[x_{i}^{(n)}=c]p_{\theta}(y_{i}=a\mid\xx^{(n)})
+
                   if(xs.get(i).equals(c)) {
                     newValue -=
                     1/Zs.get(sentenceCounter)
