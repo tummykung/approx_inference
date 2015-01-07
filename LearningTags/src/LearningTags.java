@@ -57,7 +57,8 @@ public class LearningTags {
       while ((currentLine = br.readLine()) != null) {
         String[] the_words = currentLine.split(" ");
         Sentence sentence = new Sentence();
-        while(the_words.length != 1) {
+        while(the_words.length > 1) {
+          // then we know it's 3.
           Token currentToken = new Token();
           currentToken.x = the_words[0];
           currentToken.y = the_words[1];
@@ -149,12 +150,12 @@ public class LearningTags {
   public void train(String[] args) {
     final String y0 = "NN";
     final ArrayList<String> y0Set = new ArrayList<String>();
-    final ArrayList<Double> logZs = new ArrayList<Double>();
     y0Set.add(y0);
 
     System.err.println("dimPOS: " + dimPOS);
     System.err.println("dimWords: " + dimWords);
-    System.err.println(dimPOS * dimPOS + dimPOS * dimWords);
+    System.err.println("D = " + dimPOS * dimPOS + dimPOS * dimWords);
+    System.err.println("numSentences = " + trainSentences.size());
 
 
     BacktrackingLineSearch.Options btopts = new BacktrackingLineSearch.Options();
@@ -166,9 +167,7 @@ public class LearningTags {
     System.out.println();
 
     Maximizer.FunctionState state = new Maximizer.FunctionState() {
-      // Specifies the function
       // final int D = dimPOS * dimPOS + dimPOS * dimWords; // Dimensionality of the problem
-
 
       // Current theta, value, gradient
       private double[] theta = new double[D];
@@ -177,17 +176,23 @@ public class LearningTags {
       boolean valueValid = false;
       boolean gradientValid = false;
       boolean cacheValid = false;
-      Map<Triplet<Integer, Integer, String>, Double> logAlphas = new HashMap<Triplet<Integer, Integer, String>, Double>();
-      Map<Triplet<Integer, Integer, String>, Double> logBetas = new HashMap<Triplet<Integer, Integer, String>, Double>();
+      Map<Triplet<Integer, Integer, String>, Double> logAlphas;
+      Map<Triplet<Integer, Integer, String>, Double> logBetas;
+      ArrayList<Double> logZs;
 
       public double[] point() { return theta; }
 
       public void calculateCaches() {
         if(!cacheValid) {
           int sentenceCounter = 0;
+          // start these arrays fresh!
+          logAlphas = new HashMap<Triplet<Integer, Integer, String>, Double>();
+          logBetas = new HashMap<Triplet<Integer, Integer, String>, Double>();
+          logZs = new ArrayList<Double>();
+
           for(Sentence sentence : trainSentences) {
             ArrayList<String> xs = new ArrayList<String>();
-            xs.add("");
+            xs.add(""); // it doesn't really matter what x0 is. We just want to align xs with ys.
             xs.addAll(sentence.getAllX());
             ArrayList<String> ys = new ArrayList<String>();
             ys.add(y0);
@@ -217,7 +222,7 @@ public class LearningTags {
 
                 // use the log sum exp trick to stabilize numerics:
                 // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
-                double maxExponent = 0;
+                double maxExponent = Double.NEGATIVE_INFINITY;
                 for(double exponent : exponents) {
                   if(exponent > maxExponent) {
                     maxExponent = exponent;
@@ -228,7 +233,9 @@ public class LearningTags {
                   newValue += Math.exp(exponent - maxExponent);
                 }
                 double newLogAlpha = maxExponent + Math.log(newValue);
-                System.out.println("newLogAlpha = " + newLogAlpha);
+                if (DEBUG) {
+                  System.out.println("newLogAlpha = " + newLogAlpha);
+                }
                 logAlphas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k + 1, b), newLogAlpha);
               }
             }
@@ -257,7 +264,7 @@ public class LearningTags {
 
                   // use the log sum exp trick to stabilize numerics:
                   // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
-                  double maxExponent = 0;
+                  double maxExponent = Double.NEGATIVE_INFINITY;
                   for(double exponent : exponents) {
                     if(exponent > maxExponent) {
                       maxExponent = exponent;
@@ -268,7 +275,9 @@ public class LearningTags {
                     newValue1 += Math.exp(exponent - maxExponent);
                   }
                   double newLogBeta = maxExponent + Math.log(newValue1);
-                  System.out.println("newLogBeta = " + newLogBeta);
+                  if (DEBUG) {
+                    System.out.println("newLogBeta = " + newLogBeta);
+                  }
                   logBetas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, a), newLogBeta);
                 }
               } else {
@@ -284,7 +293,7 @@ public class LearningTags {
 
                 // use the log sum exp trick to stabilize numerics:
                 // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
-                double maxExponent = 0;
+                double maxExponent = Double.NEGATIVE_INFINITY;
                 for(double exponent : exponents) {
                   if(exponent > maxExponent) {
                     maxExponent = exponent;
@@ -300,7 +309,30 @@ public class LearningTags {
             }
 
             double logZ = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, 0, y0));
-            System.out.println("logZ = " + logZ);
+            
+            // we'll calculate it another way to double check
+            ArrayList<Double> exponents = new ArrayList<Double>();
+            for (String a : POSes) {
+              exponents.add(logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, sentence.length(), a)));
+            }
+            // use the log sum exp trick to stabilize numerics:
+            // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
+            double maxExponent = Double.NEGATIVE_INFINITY;
+            for(double exponent : exponents) {
+              if(exponent > maxExponent) {
+                maxExponent = exponent;
+              }
+            }
+            double newValue = 0;
+            for(double exponent : exponents) {
+              newValue += Math.exp(exponent - maxExponent);
+            }
+            double alternativeLogZ = maxExponent + Math.log(newValue);
+            double tolerance = Math.pow(10, -7);
+            if (DEBUG) {
+              System.out.println("logZ = " + logZ);
+            }
+            assert(Math.abs(logZ - alternativeLogZ) < tolerance);
             logZs.add(logZ);
             sentenceCounter += 1;
           }
@@ -320,6 +352,22 @@ public class LearningTags {
             ArrayList<String> ys = new ArrayList<String>();
             ys.add(y0);
             ys.addAll(sentence.getAllY());
+
+            // check for correctness: sum_a p(y_i = a | x) = 1.
+            for(int i = 1; i <= sentence.length(); i++) {
+              double theValue = 0;
+              for(String a : POSes) {
+                theValue += Math.exp(
+                  logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                    +
+                  logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                  -
+                  logZs.get(sentenceCounter)
+                );
+              }
+              double tolerance = Math.pow(10, -7);
+              assert(Math.abs(theValue - 1.00) < tolerance);
+            }
 
             for(String a : POSes) {
               for(String b : POSes) {
@@ -426,7 +474,9 @@ public class LearningTags {
         return value;
       }
 
-      public void invalidate() { valueValid = gradientValid = cacheValid = false; }
+      public void invalidate() {
+        valueValid = gradientValid = cacheValid = false;
+      }
     };
 
     // Optimize!
@@ -444,11 +494,6 @@ public class LearningTags {
     {
       finalTheta[i] = thetaTemp[i];
     }
-    System.out.println("^^^^^^^^^");
-    for(int i = 0; i < D; i++) {
-      System.out.print(finalTheta[i] + " ");
-    }
-    System.out.println("^^^^^^^^^");
   }
 
   public ArrayList<String> predictPOSLabelsUsingBoW(ArrayList<String> inputs) {
@@ -492,12 +537,19 @@ public class LearningTags {
     xs.add("");
     xs.addAll(inputs);
     // base case
-    System.out.println("---------");
-    System.out.println(finalTheta);
-    System.out.println("---------");
+    if (DEBUG) {
+      System.out.println("---------");
+      System.out.println(finalTheta);
+      System.out.println("---------");
+    }
     for (String b : POSes) {
       // part1 = theta_e(b, xs.get(1))
-      double part1 = finalTheta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(1)))];
+      double part1;
+      if (wordIndex.containsKey(xs.get(1))) {
+        part1 = finalTheta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(1)))];
+      } else {
+        part1 = 0;
+      }
       // part2 = theta_t(y0, b)
       double part2 = finalTheta[indexTransition(POSIndex.get(y0), POSIndex.get(b))];
       delta.put(new Pair<Integer, String>(1, b), Math.exp(part1 + part2));
@@ -508,7 +560,12 @@ public class LearningTags {
       for (String b : POSes) {
         for (String a : POSes) {
           // part1 = theta_e(b, xs.get(k + 1))
-          double part1 = finalTheta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k + 1)))];
+          double part1;
+          if (wordIndex.containsKey(xs.get(k + 1))) {
+            part1 = finalTheta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k + 1)))];
+          } else {
+            part1 = 0;
+          }
           // part2 = theta_t(a, b)
           double part2 = finalTheta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
           double candidate = delta.get(new Pair<Integer, String>(k, a))*Math.exp(part1 + part2);
@@ -516,13 +573,16 @@ public class LearningTags {
             newValue = candidate;
           }
         }
+        if (DEBUG) {
+          System.out.println("delta = " + newValue);
+        }
         delta.put(new Pair<Integer, String>(k + 1, b), newValue);
       }
     }
-    // backward
+    // backward: Viterbi
     ArrayList<String> ys = new ArrayList<String>();
     // we will add from the back and *reverse* the ys array at the end
-    double maxValue = 0;
+    double maxValue = Double.NEGATIVE_INFINITY;
     String argmax = "";
     for(String b : POSes) {
       double candidate = delta.get(new Pair<Integer, String>(L, b));
@@ -532,9 +592,9 @@ public class LearningTags {
       }
     }
     ys.add(argmax);
-    for(int i = L - 1; i >= 1; i++) {
+    for(int i = L - 1; i >= 1; i--) {
       String yIPlusOneStar = ys.get(ys.size() - 1);
-      maxValue = 0;
+      maxValue = Double.NEGATIVE_INFINITY;
       argmax = "";
       for(String a : POSes) {
         double candidate =
@@ -548,6 +608,7 @@ public class LearningTags {
       }
       ys.add(argmax);
     }
+    assert(ys.size() == inputs.size());
     Collections.reverse(ys);
     return ys;
   }
@@ -696,13 +757,13 @@ public class LearningTags {
     public ArrayList<Token> tokens;
     public ArrayList<String> Xs;
     public ArrayList<String> Ys;
-    public ArrayList<String> logZs;
+    public ArrayList<String> Zs;
 
     public Sentence() {
       tokens = new ArrayList<Token>();
       Xs = new ArrayList<String>();
       Ys = new ArrayList<String>();
-      logZs = new ArrayList<String>();
+      Zs = new ArrayList<String>();
     }
 
     public Sentence(ArrayList<Token> tokens) {
@@ -713,7 +774,7 @@ public class LearningTags {
       tokens.add(token);
       Xs.add(token.x);
       Ys.add(token.y);
-      logZs.add(token.z);
+      Zs.add(token.z);
     }
 
     public Token getToken(int i) {
@@ -737,7 +798,7 @@ public class LearningTags {
     }
 
     public ArrayList<String> getAllZ() {
-      return logZs;
+      return Zs;
     }
 
     @Override
