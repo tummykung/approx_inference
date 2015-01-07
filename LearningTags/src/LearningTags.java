@@ -15,7 +15,7 @@ import util.Triplet;
 
 public class LearningTags {
 
-  private static final String TRAIN_FILEPATH = "data/231/temp";
+  private static final String TRAIN_FILEPATH = "data/231/small";
   private static final String TEST_FILEPATH = "data/231/test";
   private static final boolean DEBUG = false;
   private CounterMap<String, String> wordAndPOSFrequencies = new CounterMap<String, String>();
@@ -42,7 +42,7 @@ public class LearningTags {
     System.out.println("dimPOS: " + learningTags.dimPOS);
     System.out.println("dimWords: " + learningTags.dimWords);
     System.out.println("D = " + learningTags.dimPOS * learningTags.dimPOS +
-    		learningTags.dimPOS * learningTags.dimWords);
+        learningTags.dimPOS * learningTags.dimWords);
     System.out.println("numSentences = " + learningTags.trainSentences.size());
     
     if (predictor.equals("CRF")) {
@@ -532,16 +532,11 @@ public class LearningTags {
     final int L = inputs.size();
     final String y0 = "NN";
 
-    Map<Pair<Integer, String>, Double> delta = new HashMap<Pair<Integer, String>, Double>();
+    Map<Pair<Integer, String>, Double> logDelta = new HashMap<Pair<Integer, String>, Double>();
     ArrayList<String> xs = new ArrayList<String>();
     xs.add("");
     xs.addAll(inputs);
     // base case
-    if (DEBUG) {
-      System.out.println("---------");
-      System.out.println(finalTheta);
-      System.out.println("---------");
-    }
     for (String b : POSes) {
       // part1 = theta_e(b, xs.get(1))
       double part1;
@@ -552,7 +547,7 @@ public class LearningTags {
       }
       // part2 = theta_t(y0, b)
       double part2 = finalTheta[indexTransition(POSIndex.get(y0), POSIndex.get(b))];
-      delta.put(new Pair<Integer, String>(1, b), Math.exp(part1 + part2));
+      logDelta.put(new Pair<Integer, String>(1, b), part1 + part2);
     }
     // recurrence
     for (int k = 1; k < L; k++) {
@@ -568,15 +563,15 @@ public class LearningTags {
           }
           // part2 = theta_t(a, b)
           double part2 = finalTheta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
-          double candidate = delta.get(new Pair<Integer, String>(k, a))*Math.exp(part1 + part2);
+          double candidate = logDelta.get(new Pair<Integer, String>(k, a)) + part1 + part2;
           if(candidate > newValue) {
             newValue = candidate;
           }
         }
-        if (DEBUG) {
-          System.out.println("delta = " + newValue);
+        if (false) { // you can turn on once to see the values of logAlphas, but they're too noisy to print all the time
+          System.out.println("logDelta = " + newValue);
         }
-        delta.put(new Pair<Integer, String>(k + 1, b), newValue);
+        logDelta.put(new Pair<Integer, String>(k + 1, b), newValue);
       }
     }
     // backward: Viterbi
@@ -585,7 +580,7 @@ public class LearningTags {
     double maxValue = Double.NEGATIVE_INFINITY;
     String argmax = "";
     for(String b : POSes) {
-      double candidate = delta.get(new Pair<Integer, String>(L, b));
+      double candidate = logDelta.get(new Pair<Integer, String>(L, b));
       if(candidate > maxValue) {
         maxValue = candidate;
         argmax = b;
@@ -598,8 +593,8 @@ public class LearningTags {
       argmax = "";
       for(String a : POSes) {
         double candidate =
-          delta.get(new Pair<Integer, String>(i, a))
-            *
+          logDelta.get(new Pair<Integer, String>(i, a))
+            +
           finalTheta[indexTransition(POSIndex.get(a), POSIndex.get(yIPlusOneStar))];
         if(candidate > maxValue) {
           maxValue = candidate;
@@ -739,6 +734,12 @@ public class LearningTags {
     }
 
     System.out.println();
+    System.out.println("### Training Profile ###");
+    System.out.println("dimPOS: " + dimPOS);
+    System.out.println("dimWords: " + dimWords);
+    System.out.println("D = " + dimPOS * dimPOS +
+        dimPOS * dimWords);
+    System.out.println("numSentences = " + trainSentences.size());
     System.out.println("### Evaluation Results ###");
     System.out.println("--- Brill Tagger ---");
     System.out.println("TotalCorrect:\t\t" + totalCorrect);
