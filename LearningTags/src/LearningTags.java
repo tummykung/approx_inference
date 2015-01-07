@@ -34,10 +34,20 @@ public class LearningTags {
   private double[] finalTheta;
   private ArrayList<Sentence> trainSentences = new ArrayList<Sentence>();
   private ArrayList<Sentence> testSentences = new ArrayList<Sentence>();
+  private static String predictor = "CRF"; // Either BoW or CRF
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     LearningTags learningTags = new LearningTags();
-    learningTags.train(args);
+
+    System.out.println("dimPOS: " + learningTags.dimPOS);
+    System.out.println("dimWords: " + learningTags.dimWords);
+    System.out.println("D = " + learningTags.dimPOS * learningTags.dimPOS +
+    		learningTags.dimPOS * learningTags.dimWords);
+    System.out.println("numSentences = " + learningTags.trainSentences.size());
+    
+    if (predictor.equals("CRF")) {
+      learningTags.train(args);
+    }
     learningTags.evaluate();
   }
 
@@ -151,12 +161,6 @@ public class LearningTags {
     final String y0 = "NN";
     final ArrayList<String> y0Set = new ArrayList<String>();
     y0Set.add(y0);
-
-    System.err.println("dimPOS: " + dimPOS);
-    System.err.println("dimWords: " + dimWords);
-    System.err.println("D = " + dimPOS * dimPOS + dimPOS * dimWords);
-    System.err.println("numSentences = " + trainSentences.size());
-
 
     BacktrackingLineSearch.Options btopts = new BacktrackingLineSearch.Options();
     LBFGSMaximizer.Options lopts = new LBFGSMaximizer.Options();
@@ -617,12 +621,19 @@ public class LearningTags {
     return inputs;
   }
 
-  public void evaluate() {
+  public void evaluate() throws Exception {
     ArrayList<Pair<Integer, Integer>> statistics = new ArrayList<Pair<Integer, Integer>>();
     ArrayList<Pair<Integer, Integer>> statisticsW = new ArrayList<Pair<Integer, Integer>>();
     for(Sentence sentence : testSentences) {
       ArrayList<String> words = sentence.getAllX();
-      ArrayList<String> predictions = predictPOSLabels(words);
+      ArrayList<String> predictions;
+      if (predictor.equals("BoW")) {
+    	  predictions = predictPOSLabelsUsingBoW(words);
+      } else if (predictor.equals("CRF")) {
+    	  predictions = predictPOSLabels(words);
+      } else {
+    	  throw new Exception("Wrong predictor option.");
+      }
       ArrayList<String> predictionsW = predictPOSWLabelsUsingBoW(words);
       ArrayList<String> answers = sentence.getAllY();
       ArrayList<String> answersW = sentence.getAllZ();
