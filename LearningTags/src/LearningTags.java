@@ -314,29 +314,29 @@ public class LearningTags {
 
             double logZ = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, 0, y0));
             
-            // we'll calculate it another way to double check
-            ArrayList<Double> exponents = new ArrayList<Double>();
-            for (String a : POSes) {
-              exponents.add(logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, sentence.length(), a)));
-            }
-            // use the log sum exp trick to stabilize numerics:
-            // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
-            double maxExponent = Double.NEGATIVE_INFINITY;
-            for(double exponent : exponents) {
-              if(exponent > maxExponent) {
-                maxExponent = exponent;
-              }
-            }
-            double newValue = 0;
-            for(double exponent : exponents) {
-              newValue += Math.exp(exponent - maxExponent);
-            }
-            double alternativeLogZ = maxExponent + Math.log(newValue);
-            double tolerance = Math.pow(10, -7);
             if (DEBUG) {
+              // we'll calculate it another way to double check
+              ArrayList<Double> exponents = new ArrayList<Double>();
+              for (String a : POSes) {
+                exponents.add(logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, sentence.length(), a)));
+              }
+              // use the log sum exp trick to stabilize numerics:
+              // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
+              double maxExponent = Double.NEGATIVE_INFINITY;
+              for(double exponent : exponents) {
+                if(exponent > maxExponent) {
+                  maxExponent = exponent;
+                }
+              }
+              double newValue = 0;
+              for(double exponent : exponents) {
+                newValue += Math.exp(exponent - maxExponent);
+              }
+              double alternativeLogZ = maxExponent + Math.log(newValue);
+              double tolerance = Math.pow(10, -7);
               System.out.println("logZ = " + logZ);
+              assert(Math.abs(logZ - alternativeLogZ) < tolerance);
             }
-            assert(Math.abs(logZ - alternativeLogZ) < tolerance);
             logZs.add(logZ);
             sentenceCounter += 1;
           }
@@ -357,20 +357,22 @@ public class LearningTags {
             ys.add(y0);
             ys.addAll(sentence.getAllY());
 
-            // check for correctness: sum_a p(y_i = a | x) = 1.
-            for(int i = 1; i <= sentence.length(); i++) {
-              double theValue = 0;
-              for(String a : POSes) {
-                theValue += Math.exp(
-                  logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
-                    +
-                  logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
-                  -
-                  logZs.get(sentenceCounter)
-                );
+            if (DEBUG) {
+              // check for correctness: sum_a p(y_i = a | x) = 1.
+              for(int i = 1; i <= sentence.length(); i++) {
+                double theValue = 0;
+                for(String a : POSes) {
+                  theValue += Math.exp(
+                    logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                      +
+                    logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                    -
+                    logZs.get(sentenceCounter)
+                  );
+                }
+                double tolerance = Math.pow(10, -7);
+                assert(Math.abs(theValue - 1.00) < tolerance);
               }
-              double tolerance = Math.pow(10, -7);
-              assert(Math.abs(theValue - 1.00) < tolerance);
             }
 
             for(String a : POSes) {
@@ -382,12 +384,6 @@ public class LearningTags {
                     newValue += 1;
                   }
 
-                  // subtract p_{\theta}(y_{i-1}=a,y_{i}=b\mid\xx^{(n)})
-                  // System.out.println("i = " + i);
-                  // System.out.println("sentenceCounter = " + sentenceCounter);
-                  // System.out.println(logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, b)));
-                  // System.out.println(sentence.length());
-                  // System.out.println("pass");
                   if(i > 1) {
                     newValue -=
                     Math.exp(
@@ -777,9 +773,7 @@ public class LearningTags {
       Zs = new ArrayList<String>();
     }
 
-    public Sentence(ArrayList<Token> tokens) {
-      this.tokens = tokens;
-    }
+    public Sentence(ArrayList<Token> tokens) { this.tokens = tokens; }
 
     public void addToken(Token token) {
       tokens.add(token);
@@ -788,29 +782,17 @@ public class LearningTags {
       Zs.add(token.z);
     }
 
-    public Token getToken(int i) {
-      return tokens.get(i);
-    }
+    public Token getToken(int i) { return tokens.get(i); }
 
-    public ArrayList<Token> getAllTokens(Token token) {
-      return tokens;
-    }
+    public ArrayList<Token> getAllTokens(Token token) { return tokens; }
 
-    public int length() {
-      return tokens.size();
-    }
+    public int length() { return tokens.size(); }
 
-    public ArrayList<String> getAllX() {
-      return Xs;
-    }
+    public ArrayList<String> getAllX() { return Xs; }
 
-    public ArrayList<String> getAllY() {
-      return Ys;
-    }
+    public ArrayList<String> getAllY() { return Ys; }
 
-    public ArrayList<String> getAllZ() {
-      return Zs;
-    }
+    public ArrayList<String> getAllZ() { return Zs; }
 
     @Override
     public String toString() {
