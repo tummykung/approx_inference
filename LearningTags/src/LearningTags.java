@@ -15,7 +15,7 @@ import util.Triplet;
 
 public class LearningTags {
 
-  private static final String TRAIN_FILEPATH = "data/231/small";
+  private static final String TRAIN_FILEPATH = "data/231/tiny";
   private static final String TEST_FILEPATH = "data/231/test";
   private static final boolean DEBUG = false;
   private CounterMap<String, String> wordAndPOSFrequencies = new CounterMap<String, String>();
@@ -34,7 +34,8 @@ public class LearningTags {
   private double[] finalTheta;
   private ArrayList<Sentence> trainSentences = new ArrayList<Sentence>();
   private ArrayList<Sentence> testSentences = new ArrayList<Sentence>();
-  private static String predictor = "CRF"; // Either BoW or CRF
+  private static String predictor = "CRF"; // Either unigram or CRF
+
 
   public static void main(String[] args) throws Exception {
     LearningTags learningTags = new LearningTags();
@@ -54,7 +55,7 @@ public class LearningTags {
   public LearningTags() {
     readInput(TRAIN_FILEPATH, trainSentences);
     readInput(TEST_FILEPATH, testSentences);
-    calculateBagOfWords();
+    calculateUnigrams();
     setup();
   }
 
@@ -87,7 +88,7 @@ public class LearningTags {
     }
   }
 
-  public void calculateBagOfWords() {
+  public void calculateUnigrams() {
     for (Sentence sentence : trainSentences) {
       ArrayList<String> Xs = sentence.getAllX();
       ArrayList<String> Ys = sentence.getAllY();
@@ -180,118 +181,116 @@ public class LearningTags {
       boolean valueValid = false;
       boolean gradientValid = false;
       boolean cacheValid = false;
-      Map<Triplet<Integer, Integer, String>, Double> logAlphas;
-      Map<Triplet<Integer, Integer, String>, Double> logBetas;
-      ArrayList<Double> logZs;
+      // Map<Triplet<Integer, Integer, String>, Double> logAlphas;
+      // Map<Triplet<Integer, Integer, String>, Double> logBetas;
+      Double[][] logAlphaArray;
+      Double[][] logBetaArray;
+      // Double[] logZs;
+      double logZ;
+      private int sentenceCounter = 0;
+
+      public void updateSentenceCounter() {
+        System.out.println(sentenceCounter);
+        sentenceCounter = sentenceCounter + 1;
+        if (sentenceCounter == trainSentences.size()) {
+          sentenceCounter = 0;
+        }
+      }
 
       public double[] point() { return theta; }
 
-      public void calculateCaches() {
-        if(!cacheValid) {
-          int sentenceCounter = 0;
-          // start these arrays fresh!
-          logAlphas = new HashMap<Triplet<Integer, Integer, String>, Double>();
-          logBetas = new HashMap<Triplet<Integer, Integer, String>, Double>();
-          logZs = new ArrayList<Double>();
+      public void calculateCachesSentence(Sentence sentence) {
+        // start these arrays fresh!
+          logAlphaArray = new Double[sentence.length() + 1][dimPOS];
+          logBetaArray = new Double[sentence.length() + 1][dimPOS];
+          for(int k = 0; k < 10; k ++) {
+            System.out.println("=============================================");
+          }
+          System.out.println("sentence.length() + 1 = " + sentence.length() + 1);
+          System.out.println("logBetaArray.length = " + logBetaArray.length);
+          System.out.println("logBetaArray[0].length = " + logBetaArray[0].length);
+          System.out.println("=============================================");
 
-          for(Sentence sentence : trainSentences) {
-            ArrayList<String> xs = new ArrayList<String>();
-            xs.add(""); // it doesn't really matter what x0 is. We just want to align xs with ys.
-            xs.addAll(sentence.getAllX());
-            ArrayList<String> ys = new ArrayList<String>();
-            ys.add(y0);
-            ys.addAll(sentence.getAllY());
+          ArrayList<String> xs = new ArrayList<String>();
+          xs.add(""); // it doesn't really matter what x0 is. We just want to align xs with ys.
+          xs.addAll(sentence.getAllX());
+          ArrayList<String> ys = new ArrayList<String>();
+          ys.add(y0);
+          ys.addAll(sentence.getAllY());
 
-            // ---------------------- computing logAlphas -------------------
-            // base case
-            for (String b : POSes) {
-              // part1 = theta_e(b, xs.get(1))
-              double part1 = theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(1)))];
-              // part2 = theta_t(y0, b)
-              double part2 = theta[indexTransition(POSIndex.get(y0), POSIndex.get(b))];
-              logAlphas.put(new Triplet<Integer, Integer, String>(sentenceCounter, 1, b), part1 + part2);
-            }
-            // recurrence
-            for (int k = 1; k <= sentence.length() - 1; k++) {
-              for (String b : POSes) {
-                ArrayList<Double> exponents = new ArrayList<Double>();
-                for (String a : POSes) {
-                  // part1 = theta_e(b, xs.get(k + 1))
-                  double part1 = theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k + 1)))];
-                  // part2 = theta_t(a, b)
-                  double part2 = theta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
-                  double part3 = logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, a));
-                  exponents.add(part1 + part2 + part3);
-                }
-
-                // use the log sum exp trick to stabilize numerics:
-                // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
-                double maxExponent = Double.NEGATIVE_INFINITY;
-                for(double exponent : exponents) {
-                  if(exponent > maxExponent) {
-                    maxExponent = exponent;
-                  }
-                }
-                double newValue = 0;
-                for(double exponent : exponents) {
-                  newValue += Math.exp(exponent - maxExponent);
-                }
-                double newLogAlpha = maxExponent + Math.log(newValue);
-                if (DEBUG) {
-                  System.out.println("newLogAlpha = " + newLogAlpha);
-                }
-                logAlphas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k + 1, b), newLogAlpha);
+          // ---------------------- computing logAlphas -------------------
+          // base case
+          for (int bIndex = 0; bIndex < dimPOS; bIndex++) {
+            // part1 = theta_e(b, xs.get(1))
+            double part1 = theta[indexEmission(bIndex, wordIndex.get(xs.get(1)))];
+            // part2 = theta_t(y0, b)
+            double part2 = theta[indexTransition(POSIndex.get(y0), bIndex)];
+            logAlphaArray[1][bIndex] = part1 + part2;
+            // System.out.println("k = " + 1);
+            // System.out.println("bIndex = " + bIndex);
+            // logAlphas.put(new Triplet<Integer, Integer, String>(sentenceCounter, 1, b), part1 + part2);
+          }
+          // System.out.println("-------");
+          // System.out.println(logAlphaArray[1][0]);
+          // System.out.println("-------");
+          // recurrence
+          for (int k = 1; k <= sentence.length() - 1; k++) {
+            for (int bIndex = 0; bIndex < dimPOS; bIndex++) {
+              ArrayList<Double> exponents = new ArrayList<Double>();
+              for (int aIndex = 0; aIndex < dimPOS; aIndex++) {
+                // part1 = theta_e(b, xs.get(k + 1))
+                double part1 = theta[indexEmission(bIndex, wordIndex.get(xs.get(k + 1)))];
+                // part2 = theta_t(a, b)
+                double part2 = theta[indexTransition(aIndex, bIndex)];
+                // System.out.println("k = " + k);
+                // System.out.println("aIndex = " + aIndex);
+                double part3 = logAlphaArray[k][aIndex];
+                // double part3 = logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, a));
+                exponents.add(part1 + part2 + part3);
               }
-            }
 
-            // ---------------------- computing logBetas -------------------
-            // base case
-            for (String a : POSes) {
-              logBetas.put(new Triplet<Integer, Integer, String>(sentenceCounter, sentence.length(), a), 0.00);
-            }
-
-            // recurrence
-            for (int k = sentence.length(); k >= 1; k--) {
-              double newValue = 0;
-
-              if (k > 1) {
-                for (String a : POSes) {
-                  ArrayList<Double> exponents = new ArrayList<Double>();
-                  for (String b : POSes) {
-                    // part1 = theta_e(a, xs.get(k))
-                    double part1 = theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k)))];
-                    // part2 = theta_t(a, b)
-                    double part2 = theta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
-                    double part3 = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, b));
-                    exponents.add(part1 + part2 + part3);
-                  }
-
-                  // use the log sum exp trick to stabilize numerics:
-                  // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
-                  double maxExponent = Double.NEGATIVE_INFINITY;
-                  for(double exponent : exponents) {
-                    if(exponent > maxExponent) {
-                      maxExponent = exponent;
-                    }
-                  }
-                  double newValue1 = 0;
-                  for(double exponent : exponents) {
-                    newValue1 += Math.exp(exponent - maxExponent);
-                  }
-                  double newLogBeta = maxExponent + Math.log(newValue1);
-                  if (DEBUG) {
-                    System.out.println("newLogBeta = " + newLogBeta);
-                  }
-                  logBetas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, a), newLogBeta);
+              // use the log sum exp trick to stabilize numerics:
+              // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
+              double maxExponent = Double.NEGATIVE_INFINITY;
+              for(double exponent : exponents) {
+                if(exponent > maxExponent) {
+                  maxExponent = exponent;
                 }
-              } else {
+              }
+              double newValue = 0;
+              for(double exponent : exponents) {
+                newValue += Math.exp(exponent - maxExponent);
+              }
+              double newLogAlpha = maxExponent + Math.log(newValue);
+              if (DEBUG) {
+                System.out.println("newLogAlpha = " + newLogAlpha);
+              }
+              logAlphaArray[k + 1][bIndex] = newLogAlpha;
+              // logAlphas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k + 1, b), newLogAlpha);
+            }
+          }
+
+          // ---------------------- computing logBetas -------------------
+          // base case
+          for (int aIndex = 0; aIndex < dimPOS; aIndex++) {
+            logBetaArray[sentence.length()][aIndex] = 0.00;
+            // logBetas.put(new Triplet<Integer, Integer, String>(sentenceCounter, sentence.length(), a), 0.00);
+          }
+
+          // recurrence
+          for (int k = sentence.length(); k >= 1; k--) {
+            double newValue = 0;
+
+            if (k > 1) {
+              for (int aIndex = 0; aIndex < dimPOS; aIndex++) {
                 ArrayList<Double> exponents = new ArrayList<Double>();
-                for (String b : POSes) {
+                for (int bIndex = 0; bIndex < dimPOS; bIndex++) {
                   // part1 = theta_e(a, xs.get(k))
-                  double part1 = theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k)))];
-                  // part2 = theta_t(a, y0)
-                  double part2 = theta[indexTransition(POSIndex.get(y0), POSIndex.get(b))];
-                  double part3 = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, b));
+                  double part1 = theta[indexEmission(bIndex, wordIndex.get(xs.get(k)))];
+                  // part2 = theta_t(a, b)
+                  double part2 = theta[indexTransition(aIndex, bIndex)];
+                  double part3 = logBetaArray[k][bIndex];
+                  // double part3 = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, b));
                   exponents.add(part1 + part2 + part3);
                 }
 
@@ -308,18 +307,24 @@ public class LearningTags {
                   newValue1 += Math.exp(exponent - maxExponent);
                 }
                 double newLogBeta = maxExponent + Math.log(newValue1);
-                logBetas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, y0), newLogBeta);
+                if (DEBUG) {
+                  System.out.println("newLogBeta = " + newLogBeta);
+                }
+                logBetaArray[k - 1][aIndex] = newLogBeta;
+                // logBetas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, a), newLogBeta);
               }
-            }
-
-            double logZ = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, 0, y0));
-            
-            if (DEBUG) {
-              // we'll calculate it another way to double check
+            } else {
               ArrayList<Double> exponents = new ArrayList<Double>();
-              for (String a : POSes) {
-                exponents.add(logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, sentence.length(), a)));
+              for (int bIndex = 0; bIndex < dimPOS; bIndex++) {
+                // part1 = theta_e(a, xs.get(k))
+                double part1 = theta[indexEmission(bIndex, wordIndex.get(xs.get(k)))];
+                // part2 = theta_t(a, y0)
+                double part2 = theta[indexTransition(POSIndex.get(y0), bIndex)];
+                double part3 = logBetaArray[k][bIndex];
+                // double part3 = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, k, b));
+                exponents.add(part1 + part2 + part3);
               }
+
               // use the log sum exp trick to stabilize numerics:
               // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
               double maxExponent = Double.NEGATIVE_INFINITY;
@@ -328,29 +333,54 @@ public class LearningTags {
                   maxExponent = exponent;
                 }
               }
-              double newValue = 0;
+              double newValue1 = 0;
               for(double exponent : exponents) {
-                newValue += Math.exp(exponent - maxExponent);
+                newValue1 += Math.exp(exponent - maxExponent);
               }
-              double alternativeLogZ = maxExponent + Math.log(newValue);
-              double tolerance = Math.pow(10, -7);
-              System.out.println("logZ = " + logZ);
-              assert(Math.abs(logZ - alternativeLogZ) < tolerance);
+              double newLogBeta = maxExponent + Math.log(newValue1);
+              logBetaArray[k - 1][POSIndex.get(y0)] = newLogBeta;
+              // logBetas.put(new Triplet<Integer, Integer, String>(sentenceCounter, k - 1, y0), newLogBeta);
             }
-            logZs.add(logZ);
-            sentenceCounter += 1;
           }
-          // end of sentence for loop
+
+          logZ = logBetaArray[0][POSIndex.get(y0)];
+          // double logZ = logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, 0, y0));
+          
+          if (DEBUG) {
+            // we'll calculate it another way to double check
+            ArrayList<Double> exponents = new ArrayList<Double>();
+            for (int aIndex = 0; aIndex < dimPOS; aIndex++) {
+              exponents.add(logAlphaArray[sentence.length()][aIndex]);
+              // exponents.add(logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, sentence.length(), a)));
+            }
+            // use the log sum exp trick to stabilize numerics:
+            // log(sum_i e^{x_i}) = x_max + log(\sum_i e^(x_i - x_max))
+            double maxExponent = Double.NEGATIVE_INFINITY;
+            for(double exponent : exponents) {
+              if(exponent > maxExponent) {
+                maxExponent = exponent;
+              }
+            }
+            double newValue = 0;
+            for(double exponent : exponents) {
+              newValue += Math.exp(exponent - maxExponent);
+            }
+            double alternativeLogZ = maxExponent + Math.log(newValue);
+            double tolerance = Math.pow(10, -7);
+            System.out.println("logZ = " + logZ);
+            assert(Math.abs(logZ - alternativeLogZ) < tolerance);
+          }
+      }
+      public void calculateCaches() {
+        if(!cacheValid) {
+          int sentenceCounter = 0;
+          calculateCachesSentence(trainSentences.get(sentenceCounter));
           cacheValid = true;
         }
       }
 
-      public double[] gradient() {
-        if (!gradientValid) {
-          calculateCaches();
-          int sentenceCounter = 0;
-          for(Sentence sentence : trainSentences) {
-            ArrayList<String> xs = new ArrayList<String>();
+      public double[] gradientSentence(Sentence sentence) {
+        ArrayList<String> xs = new ArrayList<String>();
             xs.add("");
             xs.addAll(sentence.getAllX());
             ArrayList<String> ys = new ArrayList<String>();
@@ -361,13 +391,18 @@ public class LearningTags {
               // check for correctness: sum_a p(y_i = a | x) = 1.
               for(int i = 1; i <= sentence.length(); i++) {
                 double theValue = 0;
-                for(String a : POSes) {
+                for(int aIndex = 0; aIndex < dimPOS; aIndex++) {
+                  // theValue += Math.exp(
+                  //   logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                  //     +
+                  //   logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                  //   -
+                  //   logZs.get(sentenceCounter)
+                  // );
                   theValue += Math.exp(
-                    logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
-                      +
-                    logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
-                    -
-                    logZs.get(sentenceCounter)
+                    logAlphaArray[i][aIndex] +
+                    logBetaArray[i][aIndex] -
+                    logZ
                   );
                 }
                 double tolerance = Math.pow(10, -7);
@@ -375,62 +410,89 @@ public class LearningTags {
               }
             }
 
-            for(String a : POSes) {
-              for(String b : POSes) {
+            for(int aIndex = 0; aIndex < dimPOS; aIndex++) {
+              for(int bIndex = 0; bIndex < dimPOS; bIndex++) {
                 double newValue = 0;
                 for(int i = 1; i <= sentence.length(); i++) {
                     // add \I[y_{i-1}^{(n)}=a,y_{i}^{(n)}=b]
-                  if(ys.get(i - 1).equals(a) && ys.get(i).equals(b)) {
+                  if(ys.get(i - 1).equals(POSes.get(aIndex)) && ys.get(i).equals(POSes.get(bIndex))) {
                     newValue += 1;
                   }
 
                   if(i > 1) {
-                    newValue -=
-                    Math.exp(
-                      logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i - 1, a))
-                        +
-                      theta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(i)))]
-                        +
-                      theta[indexTransition(POSIndex.get(a), POSIndex.get(b))]
-                        +
-                      logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, b))
-                        -
-                      logZs.get(sentenceCounter)
+                    System.out.println("sentence.length() + 1 = " + sentence.length() + 1);
+                    System.out.println("dimPOS = " + dimPOS);
+                    System.out.println("i = " + i);
+                    System.out.println("aIndex = " + aIndex);
+                    System.out.println("bIndex = " + bIndex);
+                    System.out.println("logAlphaArray[i - 1][aIndex] = " + logAlphaArray[i - 1][aIndex]);
+                    System.out.println("theta[indexEmission(bIndex, wordIndex.get(xs.get(i)))] = " + theta[indexEmission(bIndex, wordIndex.get(xs.get(i)))]);
+                    System.out.println("theta[indexTransition(aIndex, bIndex)] = " + theta[indexTransition(aIndex, bIndex)]);
+                    System.out.println("logBetaArray.length = " + logBetaArray.length);
+                    System.out.println("logBetaArray[i][bIndex] = " + logBetaArray[i][bIndex]);
+                    newValue -= Math.exp(
+                      logAlphaArray[i - 1][aIndex] +
+                      theta[indexEmission(bIndex, wordIndex.get(xs.get(i)))] +
+                      theta[indexTransition(aIndex, bIndex)] +
+                      logBetaArray[i][bIndex] -
+                      logZ
                     );
+                    // newValue -=
+                    // Math.exp(
+                    //   logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i - 1, a))
+                    //     +
+                    //   theta[indexEmission(bIndex, wordIndex.get(xs.get(i)))]
+                    //     +
+                    //   theta[indexTransition(aIndex, bIndex)]
+                    //     +
+                    //   logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, b))
+                    //     -
+                    //   logZs.get(sentenceCounter)
+                    // );
                   }
                 }
-                gradient[indexTransition(POSIndex.get(a), POSIndex.get(b))] += newValue;
+                gradient[indexTransition(aIndex, bIndex)] += newValue;
               }
             }
 
-            for(String a : POSes) {
+            for(int aIndex = 0; aIndex < dimPOS; aIndex++) {
               for(String c : words) {
                 double newValue = 0;
                 for(int i = 1; i <= sentence.length(); i++) {
                     // add \I[y_{i-1}^{(n)}=a,x_{i}^{(n)}=c]
-                  if(ys.get(i - 1).equals(a) && xs.get(i).equals(c)) {
+                  if(ys.get(i - 1).equals(POSIndex.get(aIndex)) && xs.get(i).equals(c)) {
                     newValue += 1;
                   }
 
                     // subtract \I[x_{i}^{(n)}=c]p_{\theta}(y_{i}=a\mid\xx^{(n)})
 
                   if(xs.get(i).equals(c)) {
-                    newValue -=
-                    Math.exp(
-                      logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
-                        +
-                      logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
-                      -
-                      logZs.get(sentenceCounter)
+                    newValue -= Math.exp(
+                      logAlphaArray[i][aIndex] +
+                      logBetaArray[i][aIndex] -
+                      logZ
                     );
+                    // newValue -=
+                    // Math.exp(
+                    //   logAlphas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                    //     +
+                    //   logBetas.get(new Triplet<Integer, Integer, String>(sentenceCounter, i, a))
+                    //   -
+                    //   logZs.get(sentenceCounter)
+                    // );
                   }
-                  gradient[indexEmission(POSIndex.get(a), wordIndex.get(c))] += newValue;
+                  gradient[indexEmission(aIndex, wordIndex.get(c))] += newValue;
                 }
               }
             }
-            sentenceCounter += 1;
-          }
-          // end of sentence for loop
+          return gradient;
+      }
+
+      public double[] gradient() {
+        if (!gradientValid) {
+          calculateCaches();
+          gradient = gradientSentence(trainSentences.get(sentenceCounter));
+          updateSentenceCounter();
         }
         gradientValid = true;
         return gradient;
@@ -440,36 +502,32 @@ public class LearningTags {
         if (!valueValid) {
           calculateCaches();
           value = 0;
-          int sentenceCounter = 0;
-          for(Sentence sentence : trainSentences) {
-            ArrayList<String> xs = new ArrayList<String>();
-            xs.add("");
-            xs.addAll(sentence.getAllX());
-            ArrayList<String> ys = new ArrayList<String>();
-            ys.add(y0);
-            ys.addAll(sentence.getAllY());
+          Sentence sentence = trainSentences.get(sentenceCounter);
+          ArrayList<String> xs = new ArrayList<String>();
+          xs.add("");
+          xs.addAll(sentence.getAllX());
+          ArrayList<String> ys = new ArrayList<String>();
+          ys.add(y0);
+          ys.addAll(sentence.getAllY());
 
-            for(int i = 1; i <= sentence.length(); i++) {
-              for(String a : POSes) {
-                for(String b : POSes) {
+          for(int i = 1; i <= sentence.length(); i++) {
+            for(int aIndex = 0; aIndex < dimPOS; aIndex++) {
+              for(int bIndex = 0; bIndex < dimPOS; bIndex++) {
 
-                  if(i > 1 && ys.get(i - 1).equals(a) && ys.get(i).equals(b)) {
-                    value += theta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
-                  }
+                if(i > 1 && ys.get(i - 1).equals(POSes.get(aIndex)) && ys.get(i).equals(POSes.get(bIndex))) {
+                  value += theta[indexTransition(aIndex, bIndex)];
                 }
+              }
 
-                for(String c : words) {
-                  if(ys.get(i).equals(a) && xs.get(i).equals(c)) {
-                    value += theta[indexEmission(POSIndex.get(a), wordIndex.get(c))];
-                  }
+              for(String c : words) {
+                if(ys.get(i).equals(POSes.get(aIndex)) && xs.get(i).equals(c)) {
+                  value += theta[indexEmission(aIndex, wordIndex.get(c))];
                 }
               }
             }
-
-            value -= logZs.get(sentenceCounter);
-            sentenceCounter += 1;
           }
-          // end of sentence loop
+
+          value -= logZ;
         }
         return value;
       }
@@ -481,10 +539,15 @@ public class LearningTags {
 
     // Optimize!
     for(int iter = 0; ; iter++) {
-      LogInfo.logs("iter %d: theta = %s, value = %s, gradient = %s", iter,
-        Fmt.D(state.point()),
-        Fmt.D(state.value()),
-        Fmt.D(state.gradient()));
+      for (int i = 0; i < trainSentences.size(); i++) {
+        // state.sentenceCounter = i;
+        LogInfo.logs("iter %d: theta = %s, value = %s, gradient = %s, trainSentenceCounter = %s", iter,
+          Fmt.D(state.point()),
+          Fmt.D(state.value()),
+          Fmt.D(state.gradient()),
+          i
+        );
+      }
       if(maximizer.takeStep(state)) break;
     }
     // Execution.finish();
@@ -496,7 +559,7 @@ public class LearningTags {
     }
   }
 
-  public ArrayList<String> predictPOSLabelsUsingBoW(ArrayList<String> inputs) {
+  public ArrayList<String> predictPOSLabelsUsingUnigram(ArrayList<String> inputs) {
     ArrayList<String> output = new ArrayList<String>();
     String mostFrequentPOSTag = POSFrequencies.argMax();
     for(String word : inputs) {
@@ -512,7 +575,7 @@ public class LearningTags {
     return output;
   }
 
-  public ArrayList<String> predictPOSWLabelsUsingBoW(ArrayList<String> inputs) {
+  public ArrayList<String> predictPOSWLabelsUsingUnigram(ArrayList<String> inputs) {
     ArrayList<String> output = new ArrayList<String>();
     String mostFrequentPOSWTag = POSWFrequencies.argMax();
     for(String word : inputs) {
@@ -532,38 +595,41 @@ public class LearningTags {
     final int L = inputs.size();
     final String y0 = "NN";
 
-    Map<Pair<Integer, String>, Double> logDelta = new HashMap<Pair<Integer, String>, Double>();
+    // Map<Pair<Integer, String>, Double> logDelta = new HashMap<Pair<Integer, String>, Double>();
+    Double[][] logDeltaArray = new Double[L + 1][dimPOS];
     ArrayList<String> xs = new ArrayList<String>();
     xs.add("");
     xs.addAll(inputs);
     // base case
-    for (String b : POSes) {
+    for (int bIndex = 0; bIndex < dimPOS; bIndex++) {
       // part1 = theta_e(b, xs.get(1))
       double part1;
       if (wordIndex.containsKey(xs.get(1))) {
-        part1 = finalTheta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(1)))];
+        part1 = finalTheta[indexEmission(bIndex, wordIndex.get(xs.get(1)))];
       } else {
         part1 = 0;
       }
       // part2 = theta_t(y0, b)
-      double part2 = finalTheta[indexTransition(POSIndex.get(y0), POSIndex.get(b))];
-      logDelta.put(new Pair<Integer, String>(1, b), part1 + part2);
+      double part2 = finalTheta[indexTransition(POSIndex.get(y0), bIndex)];
+      logDeltaArray[1][bIndex] = part1 + part2;
+      // logDelta.put(new Pair<Integer, String>(1, b), part1 + part2);
     }
     // recurrence
     for (int k = 1; k < L; k++) {
       double newValue = 0;
-      for (String b : POSes) {
-        for (String a : POSes) {
+      for (int bIndex = 0; bIndex < dimPOS; bIndex++) {
+        for (int aIndex = 0; aIndex < dimPOS; aIndex++) {
           // part1 = theta_e(b, xs.get(k + 1))
           double part1;
           if (wordIndex.containsKey(xs.get(k + 1))) {
-            part1 = finalTheta[indexEmission(POSIndex.get(b), wordIndex.get(xs.get(k + 1)))];
+            part1 = finalTheta[indexEmission(bIndex, wordIndex.get(xs.get(k + 1)))];
           } else {
             part1 = 0;
           }
           // part2 = theta_t(a, b)
-          double part2 = finalTheta[indexTransition(POSIndex.get(a), POSIndex.get(b))];
-          double candidate = logDelta.get(new Pair<Integer, String>(k, a)) + part1 + part2;
+          double part2 = finalTheta[indexTransition(aIndex, bIndex)];
+          double candidate = logDeltaArray[k][aIndex] + part1 + part2;
+          // double candidate = logDelta.get(new Pair<Integer, String>(k, a)) + part1 + part2;
           if(candidate > newValue) {
             newValue = candidate;
           }
@@ -571,7 +637,8 @@ public class LearningTags {
         if (false) { // you can turn on once to see the values of logAlphas, but they're too noisy to print all the time
           System.out.println("logDelta = " + newValue);
         }
-        logDelta.put(new Pair<Integer, String>(k + 1, b), newValue);
+        logDeltaArray[k + 1][bIndex] = newValue;
+        // logDelta.put(new Pair<Integer, String>(k + 1, b), newValue);
       }
     }
     // backward: Viterbi
@@ -579,11 +646,12 @@ public class LearningTags {
     // we will add from the back and *reverse* the ys array at the end
     double maxValue = Double.NEGATIVE_INFINITY;
     String argmax = "";
-    for(String b : POSes) {
-      double candidate = logDelta.get(new Pair<Integer, String>(L, b));
+    for(int bIndex = 0; bIndex < dimPOS; bIndex++) {
+      double candidate = logDeltaArray[L][bIndex];
+      // double candidate = logDelta.get(new Pair<Integer, String>(L, b));
       if(candidate > maxValue) {
         maxValue = candidate;
-        argmax = b;
+        argmax = POSes.get(bIndex);
       }
     }
     ys.add(argmax);
@@ -591,14 +659,15 @@ public class LearningTags {
       String yIPlusOneStar = ys.get(ys.size() - 1);
       maxValue = Double.NEGATIVE_INFINITY;
       argmax = "";
-      for(String a : POSes) {
+      for(int aIndex = 0; aIndex < dimPOS; aIndex++) {
         double candidate =
-          logDelta.get(new Pair<Integer, String>(i, a))
+            logDeltaArray[i][aIndex]
+          // logDelta.get(new Pair<Integer, String>(i, a))
             +
-          finalTheta[indexTransition(POSIndex.get(a), POSIndex.get(yIPlusOneStar))];
+          finalTheta[indexTransition(aIndex, POSIndex.get(yIPlusOneStar))];
         if(candidate > maxValue) {
           maxValue = candidate;
-          argmax = a;
+          argmax = POSes.get(aIndex);
         }
       }
       ys.add(argmax);
@@ -618,14 +687,14 @@ public class LearningTags {
     for(Sentence sentence : testSentences) {
       ArrayList<String> words = sentence.getAllX();
       ArrayList<String> predictions;
-      if (predictor.equals("BoW")) {
-    	  predictions = predictPOSLabelsUsingBoW(words);
+      if (predictor.equals("unigram")) {
+    	  predictions = predictPOSLabelsUsingUnigram(words);
       } else if (predictor.equals("CRF")) {
     	  predictions = predictPOSLabels(words);
       } else {
     	  throw new Exception("Wrong predictor option.");
       }
-      ArrayList<String> predictionsW = predictPOSWLabelsUsingBoW(words);
+      ArrayList<String> predictionsW = predictPOSWLabelsUsingUnigram(words);
       ArrayList<String> answers = sentence.getAllY();
       ArrayList<String> answersW = sentence.getAllZ();
       if (DEBUG) {
