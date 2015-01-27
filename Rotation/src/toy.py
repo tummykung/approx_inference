@@ -59,7 +59,7 @@ def main():
             train_data.extend([(y, list(x)) for y in samples_by_x[x][2:]])
             test_data.extend([(y, list(x)) for y in samples_by_x[x][0:2]])
 
-    best_theta = train(train_data)
+    best_theta = train(train_data, eta)
 
     print
     if eta is not None:
@@ -142,7 +142,7 @@ def predict(x, theta, eta):
 
     return (maxW, maxValue)
 
-def train(train_data):
+def train(train_data, eta):
     theta_hat = np.array([0.0, 0.0, 0.0, 0.0])
     theta_hat_average = np.array([0.0, 0.0, 0.0, 0.0])
     counter = 0
