@@ -59,6 +59,7 @@ def main():
             train_data.extend([(y, list(x)) for y in samples_by_x[x][2:]])
             test_data.extend([(y, list(x)) for y in samples_by_x[x][0:2]])
 
+    random.shuffle(train_data)
     best_theta = train(train_data, eta)
 
     print
