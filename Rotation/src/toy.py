@@ -8,7 +8,7 @@ import simplejson
 import numpy as np
 
 k = 3 # sentence length
-n = 4 # range X
+n = 10 # range X
 
 range_Y = int(np.ceil(np.log(n)/np.log(2))) + 1
 m = [range_Y, range_Y, 9]
@@ -29,7 +29,7 @@ samples = []
 samples_by_x = {}
 eta = None # eta = None means we use a non-relaxed model
 
-step_size = 0.1
+step_size = 0.01
 
 def main():
     eta = None # this is needed.
@@ -71,6 +71,8 @@ def main():
     print "rangeY = " + str(m)
     print "vocab size(X) = " + str(n)
 
+    expert_total_log_likelihood = calculate_average_log_likelihood(train_data, true_theta, eta)
+    print "best_expert log-likelihood on training set = " + str(expert_total_log_likelihood)
     print "best_theta = " + str(best_theta)
     print "true_theta = " + str(true_theta)
     diff = best_theta - true_theta
@@ -82,40 +84,48 @@ def main():
         best_expert_count_correct,
         best_expert_total_count,
         best_expert_accuracy,
-        best_expert_total_log_likelihood
+        best_expert_average_log_likelihood
     ) = get_accuracy(true_theta, test_data, eta)
     print "best_expert_accuracy = {accuracy} ({count}/{total})".format(
         accuracy=best_expert_accuracy,
         count=best_expert_count_correct,
         total=best_expert_total_count
     )
-    print "average best_expert_log_likelihood = {t}".format(t=best_expert_total_log_likelihood/float(best_expert_total_count))
+    print "average best_expert_log_likelihood = {t}".format(t=best_expert_average_log_likelihood)
 
     print
     (
         count_correct,
         total_count,
         accuracy,
-        total_log_likelihood
+        average_log_likelihood
     ) = get_accuracy(best_theta, test_data, eta)
     print "accuracy = {accuracy} ({count}/{total})".format(
         accuracy=accuracy,
         count=count_correct,
         total=total_count
     )
-    print "average log_likelihood = {t}".format(t=total_log_likelihood/float(total_count))
+    print "average log_likelihood = {t}".format(t=average_log_likelihood)
+
+def calculate_average_log_likelihood(dataset, theta, eta):
+    total_log_likelihood = 0.0
+    count = 0
+    for sample in dataset:
+        count += 1
+        w = sample[0]
+        x = sample[1]
+        total_log_likelihood += np.log(real_p(w, x, theta, eta))
+    return total_log_likelihood/float(count)
 
 
 def get_accuracy(theta, test_data, eta):
     print "predicting and getting accuracy..."
     count = 0
     count_correct = 0
-    total_log_likelihood = 0.0
     for sample in test_data:
         w_correct = sample[0]
         x = sample[1]
-        (w, log_likelihood) = predict(x, theta, eta)
-        total_log_likelihood += log_likelihood
+        (w, maxProbablity) = predict(x, theta, eta)
         correct = False
         if(w == w_correct):
             correct = True
@@ -128,9 +138,11 @@ def get_accuracy(theta, test_data, eta):
                 correct=correct
             )
         count += 1
+    average_log_likelihood = calculate_average_log_likelihood(test_data, theta, eta)
+    print "test dataset average log-likelihood = " + str(average_log_likelihood)
     if count == 0:
-        return (count_correct, count, None, total_log_likelihood)
-    return (count_correct, count, float(count_correct)/count, total_log_likelihood)
+        return (count_correct, count, None, average_log_likelihood)
+    return (count_correct, count, float(count_correct)/count, average_log_likelihood)
 
 def predict(x, theta, eta):
     maxValue = -1.0
@@ -173,6 +185,10 @@ def train(train_data, eta):
         # total += theta_hat
         # theta_hat_average = total / counter
         theta_hat_average = (counter - 1)/float(counter)*theta_hat_average + 1/float(counter)*theta_hat
+        if (counter % 100 == 0) or (counter == len(train_data)):
+            print counter
+            average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat_average, eta)
+            print "train dataset average log-likelihood = " + str(average_log_likelihood)
         if(learning_verbose):
             print theta_hat_average
 
