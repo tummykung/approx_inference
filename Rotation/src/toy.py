@@ -8,14 +8,17 @@ import simplejson
 import numpy as np
 
 k = 3 # sentence length
-n = 10 # range X
+n = 5 # range X
 
 range_Y = int(np.ceil(np.log(n)/np.log(2))) + 1
-m = [range_Y, range_Y, 9]
+# m = [range_Y, range_Y, 9]
+m = [9, 9, 9]
 
-learning_verbose = False
+learning_verbose = True
+log_likelihood_verbose = True
 prediction_verbose = False
 sanity_check = False
+fully_supervised = True
 true_theta = np.array([0.0, 0.0, 0.0, 0.0]) # to be initialized
 X = range(1, n + 1)
 Y0 = range(m[0] + 1)
@@ -27,23 +30,23 @@ probability = {}
 num_samples_per_x = 15
 samples = []
 samples_by_x = {}
-eta = None # eta = None means we use a non-relaxed model
+xi = None # xi = None means we use a non-relaxed model
 
-step_size = 0.01
+step_size = 0.1
 
 def main():
-    eta = None # this is needed.
+    xi = None # this is needed.
     if(len(sys.argv) < 5 or len(sys.argv) > 6):
         print "(current number of argumets = {num}".format(num=len(sys.argv) - 1)
         print "Must have at least 4 arguments for the 4 values of theta."
-        print "If the fifth value is specified, that will be eta, and we'll use a relaxed model with"
-        print "the corresponding eta"
+        print "If the fifth value is specified, that will be xi,"
+        print "and we'll use a relaxed model with parameter xi"
         sys.exit(2)
     else:
         for j in range(4):
             true_theta[j] = float(sys.argv[j + 1])
         if (len(sys.argv) == 6):
-            eta = float(sys.argv[5])
+            xi = float(sys.argv[5])
     generate_data()
 
     for element in samples:
@@ -56,106 +59,123 @@ def main():
 
     for x in list(itertools.product(X, X, X)):
         if x in samples_by_x:
-            train_data.extend([(y, list(x)) for y in samples_by_x[x][2:]])
-            test_data.extend([(y, list(x)) for y in samples_by_x[x][0:2]])
+            train_data.extend([(output, list(x)) for output in samples_by_x[x][2:]])
+            test_data.extend([(output, list(x)) for output in samples_by_x[x][0:2]])
 
     random.shuffle(train_data)
-    best_theta = train(train_data, eta)
+    learned_theta = train(train_data, xi)
 
     print
-    if eta is not None:
-        print "eta = " + str(eta)
+    if xi is not None:
+        print "xi:\t" + str(xi)
     else:
-        print "no relaxation"
+        print "xi:\tno relaxation"
 
-    print "rangeY = " + str(m)
-    print "vocab size(X) = " + str(n)
+    print "rangeY:\t" + str(m)
+    print "vocab size(X):\t" + str(n)
+    print "fully_supervised?:\t" + str(fully_supervised)
 
-    expert_total_log_likelihood = calculate_average_log_likelihood(train_data, true_theta, eta)
-    print "best_expert log-likelihood on training set = " + str(expert_total_log_likelihood)
-    print "best_theta = " + str(best_theta)
-    print "true_theta = " + str(true_theta)
-    diff = best_theta - true_theta
-    norm_diff = np.linalg.norm(diff)
-    print "L2 difference = " + str(norm_diff)
     print
 
+    print "===== expert statistics ====="
+    print "true_theta:\t" + str(true_theta)
+    best_expert_train_dataset_average_log_likelihood = calculate_average_log_likelihood(train_data, true_theta, xi)
+    print "best_expert_train_dataset_average_log_likelihood:\t" + str(best_expert_train_dataset_average_log_likelihood)
     (
         best_expert_count_correct,
         best_expert_total_count,
         best_expert_accuracy,
-        best_expert_average_log_likelihood
-    ) = get_accuracy(true_theta, test_data, eta)
-    print "best_expert_accuracy = {accuracy} ({count}/{total})".format(
+        best_expert_test_dataset_average_log_likelihood
+    ) = get_accuracy(true_theta, test_data, xi)
+    print "best_expert_test_dataset_average_log_likelihood:\t{ll}".format(ll=best_expert_test_dataset_average_log_likelihood)
+    print "best_expert_accuracy:\t{accuracy} ({count}/{total})".format(
         accuracy=best_expert_accuracy,
         count=best_expert_count_correct,
         total=best_expert_total_count
     )
-    print "average best_expert_log_likelihood = {t}".format(t=best_expert_average_log_likelihood)
 
     print
+
+    print "===== learner statistics ====="
+    print "learned_theta:\t" + str(learned_theta)
+    learner_train_dataset_average_log_likelihood = calculate_average_log_likelihood(train_data, learned_theta, xi)
+    print "learner_train_dataset_average_log_likelihood:\t" + str(learner_train_dataset_average_log_likelihood)
     (
         count_correct,
         total_count,
         accuracy,
-        average_log_likelihood
-    ) = get_accuracy(best_theta, test_data, eta)
-    print "accuracy = {accuracy} ({count}/{total})".format(
+        learner_test_dataset_average_log_likelihood
+    ) = get_accuracy(learned_theta, test_data, xi)
+    print "learner_test_dataset_average_log_likelihood:\t{ll}".format(ll=learner_test_dataset_average_log_likelihood)
+    print "learner_accuracy:\t{accuracy} ({count}/{total})".format(
         accuracy=accuracy,
         count=count_correct,
         total=total_count
     )
-    print "average log_likelihood = {t}".format(t=average_log_likelihood)
+    # diff = learned_theta - true_theta
+    # norm_diff = np.linalg.norm(diff)
+    # print "L2 difference:\t" + str(norm_diff)
 
-def calculate_average_log_likelihood(dataset, theta, eta):
+def calculate_average_log_likelihood(dataset, theta, xi):
     total_log_likelihood = 0.0
     count = 0
     for sample in dataset:
         count += 1
         w = sample[0]
+        y = sample[0] # different semantics
         x = sample[1]
-        total_log_likelihood += np.log(real_p(w, x, theta, eta))
+        if fully_supervised:
+            total_log_likelihood += np.log(p(y, x, theta))
+        else:
+            total_log_likelihood += np.log(real_p(w, x, theta, xi))
     return total_log_likelihood/float(count)
 
 
-def get_accuracy(theta, test_data, eta):
-    print "predicting and getting accuracy..."
+def get_accuracy(theta, test_data, xi):
+    print >> sys.stderr, "predicting and getting accuracy..."
     count = 0
     count_correct = 0
     for sample in test_data:
-        w_correct = sample[0]
+        output_correct = sample[0]
         x = sample[1]
-        (w, maxProbablity) = predict(x, theta, eta)
+        (output, maxProbablity) = predict(x, theta, xi)
         correct = False
-        if(w == w_correct):
+        if(output == output_correct):
             correct = True
             count_correct += 1
         if(prediction_verbose):
             print "x:{x}, expected: {expected}, predicted: {predicted}, correct?: {correct}".format(
                 x=x,
                 expected=w_correct,
-                predicted=w,
+                predicted=output,
                 correct=correct
             )
         count += 1
-    average_log_likelihood = calculate_average_log_likelihood(test_data, theta, eta)
-    print "test dataset average log-likelihood = " + str(average_log_likelihood)
+    average_log_likelihood = calculate_average_log_likelihood(test_data, theta, xi)
+    print "test dataset average log-likelihood:\t" + str(average_log_likelihood)
     if count == 0:
         return (count_correct, count, None, average_log_likelihood)
     return (count_correct, count, float(count_correct)/count, average_log_likelihood)
 
-def predict(x, theta, eta):
+def predict(x, theta, xi):
     maxValue = -1.0
-    maxW = (0, 0, 0)
-    for w in itertools.product(W, W, W):
-        value = real_p(w, x, theta, eta)
-        if (value > maxValue):
-            maxValue = value
-            maxW = w
+    maxOutput = (0, 0, 0)
+    if fully_supervised:
+        for y in itertools.product(Y0, Y1, Y2):
+            value = p(y, x, theta)
+            if (value > maxValue):
+                maxValue = value
+                maxOutput = y
+    else:
+        for w in itertools.product(W, W, W):
+            value = real_p(w, x, theta, xi)
+            if (value > maxValue):
+                maxValue = value
+                maxOutput = w
 
-    return (maxW, maxValue)
+    return (maxOutput, maxValue)
 
-def train(train_data, eta):
+def train(train_data, xi):
     theta_hat = np.array([0.0, 0.0, 0.0, 0.0])
     theta_hat_average = np.array([0.0, 0.0, 0.0, 0.0])
     counter = 0
@@ -164,31 +184,45 @@ def train(train_data, eta):
         if(learning_verbose):
             print counter
         w = sample[0]
+        y = sample[0] # different semantics
         x = sample[1]
         new_grad = np.array([0.0, 0.0, 0.0, 0.0])
-        for y in itertools.product(Y0, Y1, Y2):
+
+        if fully_supervised:
             y = np.array(y)
             gradient = gradient_phi(y, x)
-            Z = calculate_Z(x, theta_hat_average)
+            Z = calculate_Z(x, theta_hat)
             E_grad_phi = expectation_gradient_phi(x, theta_hat, Z)
-            grad_log_Y = step_size * (gradient - E_grad_phi)
+            grad_log_Y = (gradient - E_grad_phi)
+            new_grad = grad_log_Y
 
-            if eta is None:
-                the_q_component = q(w, y)
-            else:
-                the_q_component = q_relaxed(w, y, eta)
-            new_grad += grad_log_Y * p(y, x, theta_hat) * the_q_component
+        else:
+            for y in itertools.product(Y0, Y1, Y2):
+                y = np.array(y)
+                gradient = gradient_phi(y, x)
+                Z = calculate_Z(x, theta_hat)
+                E_grad_phi = expectation_gradient_phi(x, theta_hat, Z)
+                grad_log_Y = (gradient - E_grad_phi)
 
-        new_grad /= real_p(w, x, theta_hat, eta)
+                if xi is None:
+                    the_q_component = q(w, y)
+                else:
+                    the_q_component = q_relaxed(w, y, xi)
+                new_grad += grad_log_Y * p(y, x, theta_hat) * the_q_component
 
-        theta_hat += new_grad
+            new_grad /= real_p(w, x, theta_hat, xi)
+
+        theta_hat += step_size * new_grad
         # total += theta_hat
         # theta_hat_average = total / counter
         theta_hat_average = (counter - 1)/float(counter)*theta_hat_average + 1/float(counter)*theta_hat
-        if (counter % 100 == 0) or (counter == len(train_data)):
-            print counter
-            average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat_average, eta)
-            print "train dataset average log-likelihood = " + str(average_log_likelihood)
+
+        if (log_likelihood_verbose and counter % 100 == 0) or (counter == len(train_data)):
+            if log_likelihood_verbose:
+                print counter
+
+            average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat_average, xi)
+            print "train dataset average log-likelihood:\t" + str(average_log_likelihood)
         if(learning_verbose):
             print theta_hat_average
 
@@ -220,10 +254,17 @@ def expectation_gradient_phi(x, theta, Z):
         total[i] = the_sum
 
     total[3] = float(1)/Z * math.exp(theta[3]) * common_factor
+    # sanity check
     # Before this it was slow because I iterated through all Y^3
-    # for y in list(itertools.product(Y0, Y1, Y2)):
-    #     gradient = gradient_phi(y, x)
-    #     total += p(y, x, theta) * gradient
+    if sanity_check:
+        new_total = 0.0
+        for y in list(itertools.product(Y0, Y1, Y2)):
+            gradient = gradient_phi(y, x)
+            new_total += p(y, x, theta) * gradient
+        print "if expectation_gradient_phi is correct, we should have {a}={b}".format(
+            a=total,
+            b=new_total
+        )
     return total
 
 def gradient_phi(y, x):
@@ -243,21 +284,25 @@ def gradient_phi(y, x):
     return g
 
 def generate_data():
-    print "generating data..."
+    print >> sys.stderr, "generating data..."
     for x in itertools.product(X, X, X):
         # can't convert to tuple since can't hash array
         probability[x] = {}
         Z[x] = calculate_Z(x, true_theta)
-        for w in list(itertools.product(W, W, W)):
-            probability[x][w] = real_p(w, x, true_theta, None) # important to not generate from eta
 
+        if fully_supervised:
+            for y in itertools.product(Y0, Y1, Y2):
+                probability[x][y] = p(y, x, true_theta)
+        else:
+            for w in list(itertools.product(W, W, W)):
+                probability[x][w] = real_p(w, x, true_theta, None) # important to not generate from xi
         # sanity check
         if sanity_check:
-            print "sanity check... " + str((x, sum(probability[x].values())))
+            print >> sys.stderr, "sanity check... " + str((x, sum(probability[x].values())))
 
         for i in range(num_samples_per_x):
-            w = sample(x)
-            samples.append((w, x))
+            output = sample(x)
+            samples.append((output, x))
     print "done generating data. Total of {size} samples".format(size=len(samples))
     # print simplejson.dumps(samples)
 
@@ -297,19 +342,19 @@ def calculate_Z(x, theta):
     total += (math.exp(theta[3]) - 1) * math.exp(exponent)
     return total
 
-def real_p(w, x, theta, eta):
+def real_p(w, x, theta, xi):
     total = 0.0
     for y in itertools.product(Y0, Y1, Y2):
         y = np.array(y)
-        if eta is None:
+        if xi is None:
             q_factor = q(w, y)
         else:
-            q_factor = q_relaxed(w, y, eta)
+            q_factor = q_relaxed(w, y, xi)
         total += p(y, x, theta) * q_factor
     return total
 
-def q_relaxed(w, y, eta):
-    return np.exp(-eta * hamming(w, denotation(y)))/np.power(1.0 + 2.0 * np.exp(-eta), 3.0)
+def q_relaxed(w, y, xi):
+    return np.exp(-xi * hamming(w, denotation(y)))/np.power(1.0 + 2.0 * np.exp(-xi), 3.0)
 
 def hamming(x, y):
     """x and y must have the same length, else it will cut off the tail of the longer one."""
