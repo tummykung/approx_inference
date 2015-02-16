@@ -25,6 +25,7 @@ log_likelihood_verbose = True
 prediction_verbose = False
 sanity_check = False
 fully_supervised = False
+approx_inference = True
 true_theta = np.array([0.0, 0.0, 0.0, 0.0]) # to be initialized
 X = range(1, n + 1)
 Z0 = range(m[0] + 1)
@@ -240,11 +241,11 @@ def train(train_data, xi):
             new_grad = grad_log_Z
 
         else:
+            Z = calculate_Z(x, theta_hat)
+            E_grad_phi = expectation_gradient_phi(x, theta_hat, Z)
             for z in itertools.product(Z0, Z1, Z2):
                 z = np.array(z)
                 gradient = gradient_phi(z, x)
-                Z = calculate_Z(x, theta_hat)
-                E_grad_phi = expectation_gradient_phi(x, theta_hat, Z)
                 grad_log_Z = (gradient - E_grad_phi)
 
                 if xi is None:
