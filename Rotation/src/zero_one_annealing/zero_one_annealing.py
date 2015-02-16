@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# usage: python toy.py theta0 theta1 theta2 theta3
 import sys
 import itertools
 import math

@@ -1,4 +1,5 @@
 **/.class
 *.class
+*.pyc
 .DS_Store
 
