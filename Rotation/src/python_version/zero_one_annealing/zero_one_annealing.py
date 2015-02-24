@@ -8,6 +8,8 @@ import numpy as np
 from util.probability import ConditionalSampling
 from util.probability import indicator
 from util.probability import hamming
+import warnings
+warnings.filterwarnings('error')
 
 from model import CRFModel
 
@@ -98,7 +100,7 @@ def main():
         if (len(sys.argv) >= 7):
             xi = float(sys.argv[6])
         if (len(sys.argv) >= 8):
-            M = float(sys.argv[7])
+            M = int(sys.argv[7])
             approx_inference = 1
         if (len(sys.argv) >= 9):
             if (sys.argv[8] == "full_approx"):
@@ -123,7 +125,7 @@ def main():
             test_data.extend([(output, list(x)) for output in samples_by_x[x][0:2]])
 
     random.shuffle(train_data)
-    learned_theta = train(train_data, xi, approx_inference)
+    learned_theta = train(train_data, xi, approx_inference, M)
 
     print
     if xi is not None:
@@ -239,7 +241,7 @@ def predict(x, theta, xi):
 
     return (maxOutput, maxValue)
 
-def train(train_data, xi, approx_inference):
+def train(train_data, xi, approx_inference, M):
     theta_hat = np.array([0.0, 0.0, 0.0, 0.0])
     theta_hat_average = np.array([0.0, 0.0, 0.0, 0.0])
     counter = 0
@@ -275,7 +277,7 @@ def train(train_data, xi, approx_inference):
 
                 new_grad /= real_p(y, x, theta_hat, xi)
             elif approx_inference == 2:
-                new_grad = difference_between_expectations(x, y, theta_hat, Z, xi)
+                new_grad = difference_between_expectations(x, y, theta_hat, Z, xi, M)
 
         theta_hat += step_size * new_grad
         # total += theta_hat
@@ -297,7 +299,7 @@ def train(train_data, xi, approx_inference):
     return theta_hat_average
 
 
-def difference_between_expectations(x, y, theta, Z, xi):
+def difference_between_expectations(x, y, theta, Z, xi, M):
     output = np.array([0.0, 0.0, 0.0, 0.0])
     total1 = np.array([0.0, 0.0, 0.0, 0.0])
     totalw = 0.0
@@ -316,13 +318,26 @@ def difference_between_expectations(x, y, theta, Z, xi):
     for i in range(M):
         z = sampler.sample(x)
         z = np.array(z)
+        print "z: " + str(z)
         w = q_relaxed(y, z, xi)
+        print "w: " + str(w)
         the_phi = phi(z, x)
+        print "the_phi: " + str(the_phi)
         totalw += w
         total1 += w * the_phi
         total2 += the_phi
 
-    output = total1/totalw - total2/M
+    try:
+        output = total1/totalw - total2/M
+    except:
+        output = np.array([0.0, 0.0, 0.0, 0.0])
+
+    print "M = " + str(M)
+    print "total1/totalw = " + str(total1/totalw)
+    print "total2/M = " + str(total2/M)
+    print "total1 = " + str(total1)
+    print "totalw = " + str(totalw)
+    print "output: " + str(output)
     return output
 
 def expectation_phi(x, theta, Z, approx_inference=0):

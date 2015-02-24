@@ -12,9 +12,11 @@ class ConditionalSampling:
             value = a dictionary in the form {y1: prob1, y2: value2, ...}
         """
         self.probability = probability
+        # random.seed(9189181171) # hard-code the seed for now
 
     def sample(self, x):
         r = random.uniform(0, 1)
+        print "r: " + str(r)
         s = 0
         the_item = (0, 0, 0)
         for item in self.probability[x]:
@@ -23,6 +25,7 @@ class ConditionalSampling:
             if s >= r:
                 the_item = item
                 break
+        print "the_item: " + str(the_item)
         return the_item
 
 
