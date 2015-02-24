@@ -1,0 +1,221 @@
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.05
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.12722104  0.18674991  0.08548941 -0.21160253]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 12.2515328539
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.96875 (124/128)
+average best_expert_log_likelihood = 0.0407153830641
+
+predicting and getting accuracy...
+accuracy = 0.0546875 (7/128)
+average log_likelihood = 0.0367484160557
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.1
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.25040195  0.33567892  0.16715943 -0.21515516]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 12.079165487
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.96875 (124/128)
+average best_expert_log_likelihood = 0.0447777243762
+
+predicting and getting accuracy...
+accuracy = 0.0625 (8/128)
+average log_likelihood = 0.0365081697319
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.2
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.4254079   0.57393773  0.35633581 -0.22356142]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 11.7669624163
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.9765625 (125/128)
+average best_expert_log_likelihood = 0.0539071168834
+
+predicting and getting accuracy...
+accuracy = 0.0546875 (7/128)
+average log_likelihood = 0.036218571754
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.3
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.58353631  0.71730506  0.57831487 -0.23066359]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 11.4712962747
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.9609375 (123/128)
+average best_expert_log_likelihood = 0.0644803922108
+
+predicting and getting accuracy...
+accuracy = 0.0625 (8/128)
+average log_likelihood = 0.0361067235138
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.4
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.7036846   0.80646675  0.80252556 -0.23871423]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 11.209345418
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.953125 (122/128)
+average best_expert_log_likelihood = 0.0766122688259
+
+predicting and getting accuracy...
+accuracy = 0.1171875 (15/128)
+average log_likelihood = 0.0361652487558
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.5
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.78384626  0.88006952  1.00829675 -0.24736958]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 10.9841329582
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.9609375 (123/128)
+average best_expert_log_likelihood = 0.0904003655606
+
+predicting and getting accuracy...
+accuracy = 0.2421875 (31/128)
+average log_likelihood = 0.0368784610611
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.6
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.85849001  0.93916451  1.1544271  -0.25533671]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 10.8154146252
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.96875 (124/128)
+average best_expert_log_likelihood = 0.105919473915
+
+predicting and getting accuracy...
+accuracy = 0.484375 (62/128)
+average log_likelihood = 0.0385949964074
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.7
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.91293204  1.00170317  1.2940538  -0.25958082]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 10.657847192
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.96875 (124/128)
+average best_expert_log_likelihood = 0.123216263277
+
+predicting and getting accuracy...
+accuracy = 0.96875 (124/128)
+average log_likelihood = 0.0416088324356
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.8
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.96829861  1.02391921  1.40391547 -0.26317035]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 10.5393758696
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.90625 (116/128)
+average best_expert_log_likelihood = 0.142304824776
+
+predicting and getting accuracy...
+accuracy = 0.90625 (116/128)
+average log_likelihood = 0.0449461908732
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.9
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 1.00701152  1.07977814  1.47892936 -0.26735114]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 10.4432572722
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.953125 (122/128)
+average best_expert_log_likelihood = 0.163163428863
+
+predicting and getting accuracy...
+accuracy = 0.953125 (122/128)
+average log_likelihood = 0.0489313067504
+generating data...
+done generating data. Total of 960 samples
+
+eta = 10.0
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 1.32549625  1.36659315  2.02619778 -0.25283771]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 9.76526613997
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.9765625 (125/128)
+average best_expert_log_likelihood = 0.961615274169
+
+predicting and getting accuracy...
+accuracy = 0.9765625 (125/128)
+average log_likelihood = 0.212243790915
+generating data...
+done generating data. Total of 960 samples
+
+eta = 1.0
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 1.04484441  1.10113959  1.53898617 -0.27246459]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 10.3729079087
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.9375 (120/128)
+average best_expert_log_likelihood = 0.185732798641
+
+predicting and getting accuracy...
+accuracy = 0.9375 (120/128)
+average log_likelihood = 0.0530322833547
+generating data...
+done generating data. Total of 960 samples
+
+no relaxation
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 1.32912352  1.35193374  2.0250962  -0.24947878]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 9.76949164561
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.9765625 (125/128)
+average best_expert_log_likelihood = 0.961876352551
+
+predicting and getting accuracy...
+accuracy = 0.9765625 (125/128)
+average log_likelihood = 0.211343774289

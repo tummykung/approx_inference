@@ -1,0 +1,4 @@
+(current number of argumets = 4
+Must have at least 4 arguments for the 4 values of theta.
+If the fifth value is specified, that will be xi,
+and we'll use a relaxed model with parameter xi

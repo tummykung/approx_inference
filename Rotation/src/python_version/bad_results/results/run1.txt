@@ -1,0 +1,13 @@
+generating data...
+done generating data. Total of 15000 samples
+
+best_theta = [ 2.93876724  2.93121551  2.92602503 -0.49921855]
+true_theta = [5.0, 5.0, 5.0, 0.0]
+L2 difference = 3.61650951912
+predicting and getting accuracy...
+best_expert_accuracy = 0.8425 (1685/2000)
+average best_expert_total_log_likelihood = 0.838096687495
+
+predicting and getting accuracy...
+accuracy = 0.8425 (1685/2000)
+average total_log_likelihood = 0.308807538072

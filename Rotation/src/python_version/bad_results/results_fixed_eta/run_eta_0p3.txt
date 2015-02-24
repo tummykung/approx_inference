@@ -1,0 +1,17 @@
+generating data...
+done generating data. Total of 960 samples
+
+eta = 0.3
+rangeY = [3, 3, 9]
+vocab size(X) = 4
+best_theta = [ 0.58353631  0.71730506  0.57831487 -0.23066359]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 11.4712962747
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.9609375 (123/128)
+average best_expert_log_likelihood = 0.0644803922108
+
+predicting and getting accuracy...
+accuracy = 0.0625 (8/128)
+average log_likelihood = 0.0361067235138

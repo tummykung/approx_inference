@@ -1,0 +1,12 @@
+
+Inference Type
+==============
+0 = Exact
+1 = Approximate inference by
+	- only sampling the model expectation
+2 = Importance sampling by
+	- sampling the model expectation, use the importance weight
+	  to correct target sampling. However, still use exact inference
+	  to compute the importance weight.
+3 = Normalized importance sampling by
+	- using the model weight as the proposal distribution

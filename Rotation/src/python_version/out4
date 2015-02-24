@@ -1,0 +1,702 @@
+bundle_type          : run
+uuid                 : 0x9a33e974d19444e3be26837ee3ad63e8
+data_hash            : 0x80ea24a26e4c10b92b9630690fe63468cb4301df
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 1 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:37
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m33s
+time_user            : 14m18s
+time_system          : 0.4s
+memory               : 37.1M
+disk_read            : 21.4M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883855.scail.stanford.edu
+remote               : jude37.stanford.edu/4
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0x9a33e974d19444e3be26837ee3ad63e8
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.61649163448
+200: train dataset average log-likelihood:	-3.61649163448
+300: train dataset average log-likelihood:	-3.61649163448
+400: train dataset average log-likelihood:	-3.61649163448
+500: train dataset average log-likelihood:	-3.61649163448
+600: train dataset average log-likelihood:	-3.61649163448
+700: train dataset average log-likelihood:	-3.61649163448
+800: train dataset average log-likelihood:	-3.61649163448
+900: train dataset average log-likelihood:	-3.61649163448
+1000: train dataset average log-likelihood:	-3.61649163448
+
+xi:	1.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-2.55454402119
+best_expert_test_dataset_average_log_likelihood:	-2.48840517892
+best_expert_accuracy:	0.612 (153/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.61649163448
+learner_test_dataset_average_log_likelihood:	-3.62345737412
+learner_accuracy:	0.056 (14/250)
+bundle_type          : run
+uuid                 : 0xb94b5d5abc304349948b15ca778d33e3
+data_hash            : 0x7b04cbd8e25abdd7cc788d9c3469c2546913687e
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 10 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:41
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m40s
+time_user            : 14m18s
+time_system          : 0.3s
+memory               : 37.1M
+disk_read            : 21.4M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883856.scail.stanford.edu
+remote               : jude37.stanford.edu/5
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0xb94b5d5abc304349948b15ca778d33e3
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.23066705884
+200: train dataset average log-likelihood:	-3.23066705884
+300: train dataset average log-likelihood:	-3.23066705884
+400: train dataset average log-likelihood:	-3.23066705884
+500: train dataset average log-likelihood:	-3.23066705884
+600: train dataset average log-likelihood:	-3.23066705884
+700: train dataset average log-likelihood:	-3.23066705884
+800: train dataset average log-likelihood:	-3.23066705884
+900: train dataset average log-likelihood:	-3.23066705884
+1000: train dataset average log-likelihood:	-3.23066705884
+
+xi:	10.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.78962939979
+best_expert_test_dataset_average_log_likelihood:	-1.70777852889
+best_expert_accuracy:	0.576 (144/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.23066705884
+learner_test_dataset_average_log_likelihood:	-3.28076571617
+learner_accuracy:	0.108 (27/250)
+bundle_type          : run
+uuid                 : 0xf71b008208d34947bea68c2ff9de972a
+data_hash            : 0x73fff413aba17573ed667fc4f7c664af8b14af1b
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 100 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:43
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m34s
+time_user            : 14m16s
+time_system          : 0.5s
+memory               : 37.1M
+disk_read            : 84K
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883857.scail.stanford.edu
+remote               : jude37.stanford.edu/6
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0xf71b008208d34947bea68c2ff9de972a
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.25477645059
+200: train dataset average log-likelihood:	-3.25477645059
+300: train dataset average log-likelihood:	-3.25477645059
+400: train dataset average log-likelihood:	-3.25477645059
+500: train dataset average log-likelihood:	-3.25477645059
+600: train dataset average log-likelihood:	-3.25477645059
+700: train dataset average log-likelihood:	-3.25477645059
+800: train dataset average log-likelihood:	-3.25477645059
+900: train dataset average log-likelihood:	-3.25477645059
+1000: train dataset average log-likelihood:	-3.25477645059
+
+xi:	100.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.66934320977
+best_expert_test_dataset_average_log_likelihood:	-1.67426650098
+best_expert_accuracy:	0.556 (139/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.25477645059
+learner_test_dataset_average_log_likelihood:	-3.23446671835
+learner_accuracy:	0.108 (27/250)
+bundle_type          : run
+uuid                 : 0xc9e5d1d191cb4e24a42f0753343cb1c7
+data_hash            : 0x82f5b2c11f1fd5763c82c564e4e9b3a634070b79
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 1000 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:46
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 15m26s
+time_user            : 14m27s
+time_system          : 1.1s
+memory               : 23.3M
+disk_read            : 1.8M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883858.scail.stanford.edu
+remote               : jude36.stanford.edu/0
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0xc9e5d1d191cb4e24a42f0753343cb1c7
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	nan
+200: train dataset average log-likelihood:	nan
+300: train dataset average log-likelihood:	nan
+400: train dataset average log-likelihood:	nan
+500: train dataset average log-likelihood:	nan
+600: train dataset average log-likelihood:	nan
+700: train dataset average log-likelihood:	nan
+800: train dataset average log-likelihood:	nan
+900: train dataset average log-likelihood:	nan
+1000: train dataset average log-likelihood:	nan
+
+xi:	1000.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.70080899547
+best_expert_test_dataset_average_log_likelihood:	-1.84068384613
+best_expert_accuracy:	0.536 (134/250)
+
+===== learner statistics =====
+learned_theta:	[ nan  nan  nan  nan]
+learner_train_dataset_average_log_likelihood:	nan
+learner_test_dataset_average_log_likelihood:	nan
+learner_accuracy:	0.096 (24/250)
+bundle_type          : run
+uuid                 : 0x6758e3ac7fd84521b8c81704422867d4
+data_hash            : 0xc3201758743ce8a27e234393246ea7b0ca18be28
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 10000 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:48
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 15m14s
+time_user            : 14m27s
+time_system          : 1.1s
+memory               : 24.7M
+disk_read            : 2.7M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883859.scail.stanford.edu
+remote               : jude36.stanford.edu/1
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0x6758e3ac7fd84521b8c81704422867d4
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	nan
+200: train dataset average log-likelihood:	nan
+300: train dataset average log-likelihood:	nan
+400: train dataset average log-likelihood:	nan
+500: train dataset average log-likelihood:	nan
+600: train dataset average log-likelihood:	nan
+700: train dataset average log-likelihood:	nan
+800: train dataset average log-likelihood:	nan
+900: train dataset average log-likelihood:	nan
+1000: train dataset average log-likelihood:	nan
+
+xi:	10000.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.61176786911
+best_expert_test_dataset_average_log_likelihood:	-1.5939483192
+best_expert_accuracy:	0.612 (153/250)
+
+===== learner statistics =====
+learned_theta:	[ nan  nan  nan  nan]
+learner_train_dataset_average_log_likelihood:	nan
+learner_test_dataset_average_log_likelihood:	nan
+learner_accuracy:	0.084 (21/250)
+bundle_type          : run
+uuid                 : 0xe8d1ae8231fe4140bb74f189aea2c4e7
+data_hash            : 0x4f3e3ea07986a13d9df69c21bde774886e85d15d
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 100000 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:50
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m52s
+time_user            : 14m21s
+time_system          : 1.1s
+memory               : 37.8M
+disk_read            : 724K
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883860.scail.stanford.edu
+remote               : jude36.stanford.edu/2
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0xe8d1ae8231fe4140bb74f189aea2c4e7
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	nan
+200: train dataset average log-likelihood:	nan
+300: train dataset average log-likelihood:	nan
+400: train dataset average log-likelihood:	nan
+500: train dataset average log-likelihood:	nan
+600: train dataset average log-likelihood:	nan
+700: train dataset average log-likelihood:	nan
+800: train dataset average log-likelihood:	nan
+900: train dataset average log-likelihood:	nan
+1000: train dataset average log-likelihood:	nan
+
+xi:	100000.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.66245548609
+best_expert_test_dataset_average_log_likelihood:	-1.60894327475
+best_expert_accuracy:	0.6 (150/250)
+
+===== learner statistics =====
+learned_theta:	[ nan  nan  nan  nan]
+learner_train_dataset_average_log_likelihood:	nan
+learner_test_dataset_average_log_likelihood:	nan
+learner_accuracy:	0.116 (29/250)
+bundle_type          : run
+uuid                 : 0xd37a5d51a9e541bea9d9aa82a35dc1ef
+data_hash            : 0xf07a20f69f55c3ee939f8cb730498a52d0ee3eba
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 0.1 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:54
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 15m0s
+time_user            : 14m22s
+time_system          : 1.0s
+memory               : 36.9M
+disk_read            : 176K
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883861.scail.stanford.edu
+remote               : jude36.stanford.edu/4
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0xd37a5d51a9e541bea9d9aa82a35dc1ef
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.36802251208
+200: train dataset average log-likelihood:	-3.36802251208
+300: train dataset average log-likelihood:	-3.36802251208
+400: train dataset average log-likelihood:	-3.36802251208
+500: train dataset average log-likelihood:	-3.36802251208
+600: train dataset average log-likelihood:	-3.36802251208
+700: train dataset average log-likelihood:	-3.36802251208
+800: train dataset average log-likelihood:	-3.36802251208
+900: train dataset average log-likelihood:	-3.36802251208
+1000: train dataset average log-likelihood:	-3.36802251208
+
+xi:	0.1
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-3.25842223642
+best_expert_test_dataset_average_log_likelihood:	-3.26424892717
+best_expert_accuracy:	0.544 (136/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.36802251208
+learner_test_dataset_average_log_likelihood:	-3.36970870961
+learner_accuracy:	0.048 (12/250)
+bundle_type          : run
+uuid                 : 0x0a39a4ed79254d6c9e4050d8c81a22a7
+data_hash            : 0xb8a683419cd9936dd1bfe48f999b47c8a510d245
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 0.4 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:09:58
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 15m0s
+time_user            : 14m23s
+time_system          : 1.0s
+memory               : 36.9M
+disk_read            : 21.2M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883862.scail.stanford.edu
+remote               : jude36.stanford.edu/5
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0x0a39a4ed79254d6c9e4050d8c81a22a7
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.53104926669
+200: train dataset average log-likelihood:	-3.53104926669
+300: train dataset average log-likelihood:	-3.53104926669
+400: train dataset average log-likelihood:	-3.53104926669
+500: train dataset average log-likelihood:	-3.53104926669
+600: train dataset average log-likelihood:	-3.53104926669
+700: train dataset average log-likelihood:	-3.53104926669
+800: train dataset average log-likelihood:	-3.53104926669
+900: train dataset average log-likelihood:	-3.53104926669
+1000: train dataset average log-likelihood:	-3.53104926669
+
+xi:	0.4
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-3.01554413333
+best_expert_test_dataset_average_log_likelihood:	-3.01443016885
+best_expert_accuracy:	0.58 (145/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.53104926669
+learner_test_dataset_average_log_likelihood:	-3.53207848521
+learner_accuracy:	0.036 (9/250)
+bundle_type          : run
+uuid                 : 0x4dc7248c920644498db1c1c201bc5885
+data_hash            : 0x4624c64ba4e6188463affd5e1f4b061e2166953b
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 0.6 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:10:01
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 15m1s
+time_user            : 14m19s
+time_system          : 1.0s
+memory               : 37.0M
+disk_read            : 84K
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883863.scail.stanford.edu
+remote               : jude36.stanford.edu/6
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0x4dc7248c920644498db1c1c201bc5885
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.58581737198
+200: train dataset average log-likelihood:	-3.58581737198
+300: train dataset average log-likelihood:	-3.58581737198
+400: train dataset average log-likelihood:	-3.58581737198
+500: train dataset average log-likelihood:	-3.58581737198
+600: train dataset average log-likelihood:	-3.58581737198
+700: train dataset average log-likelihood:	-3.58581737198
+800: train dataset average log-likelihood:	-3.58581737198
+900: train dataset average log-likelihood:	-3.58581737198
+1000: train dataset average log-likelihood:	-3.58581737198
+
+xi:	0.6
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-2.84916997676
+best_expert_test_dataset_average_log_likelihood:	-2.86665449058
+best_expert_accuracy:	0.528 (132/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.58581737198
+learner_test_dataset_average_log_likelihood:	-3.58246658973
+learner_accuracy:	0.044 (11/250)
+bundle_type          : run
+uuid                 : 0x098aa6bb629c47a3988931910ed75874
+data_hash            : 0x9aa91c5c595eab68c5b1932f62e4645ccb4fe364
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 2 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:10:03
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m43s
+time_user            : 14m15s
+time_system          : 0.6s
+memory               : 40.7M
+disk_read            : 3.0M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883864.scail.stanford.edu
+remote               : jude35.stanford.edu/0
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0x098aa6bb629c47a3988931910ed75874
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.48906878599
+200: train dataset average log-likelihood:	-3.48906878599
+300: train dataset average log-likelihood:	-3.48906878599
+400: train dataset average log-likelihood:	-3.48906878599
+500: train dataset average log-likelihood:	-3.48906878599
+600: train dataset average log-likelihood:	-3.48906878599
+700: train dataset average log-likelihood:	-3.48906878599
+800: train dataset average log-likelihood:	-3.48906878599
+900: train dataset average log-likelihood:	-3.48906878599
+1000: train dataset average log-likelihood:	-3.48906878599
+
+xi:	2.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-2.0680530779
+best_expert_test_dataset_average_log_likelihood:	-2.05258919607
+best_expert_accuracy:	0.576 (144/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.48906878599
+learner_test_dataset_average_log_likelihood:	-3.47674632298
+learner_accuracy:	0.12 (30/250)
+bundle_type          : run
+uuid                 : 0xd9df64910de848029de460718ab0becb
+data_hash            : 0x92264d1bd96e690d24aa7a4fa3ca8af982d31a05
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 4 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:10:05
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m30s
+time_user            : 14m10s
+time_system          : 0.6s
+memory               : 23.0M
+disk_read            : 1.5M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883865.scail.stanford.edu
+remote               : jude35.stanford.edu/1
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0xd9df64910de848029de460718ab0becb
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.28733800152
+200: train dataset average log-likelihood:	-3.28733800152
+300: train dataset average log-likelihood:	-3.28733800152
+400: train dataset average log-likelihood:	-3.28733800152
+500: train dataset average log-likelihood:	-3.28733800152
+600: train dataset average log-likelihood:	-3.28733800152
+700: train dataset average log-likelihood:	-3.28733800152
+800: train dataset average log-likelihood:	-3.28733800152
+900: train dataset average log-likelihood:	-3.28733800152
+1000: train dataset average log-likelihood:	-3.28733800152
+
+xi:	4.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.7216884597
+best_expert_test_dataset_average_log_likelihood:	-1.89662628226
+best_expert_accuracy:	0.536 (134/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.28733800152
+learner_test_dataset_average_log_likelihood:	-3.25107332694
+learner_accuracy:	0.104 (26/250)
+bundle_type          : run
+uuid                 : 0x9f9dca5d73604f65a3aa2cd53016220a
+data_hash            : 0x53916adbb4ad424ca74ef7d905c544cbbc88b9b0
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 6 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:10:07
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m33s
+time_user            : 14m11s
+time_system          : 0.6s
+memory               : 21.6M
+disk_read            : 21.4M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883866.scail.stanford.edu
+remote               : jude35.stanford.edu/2
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0x9f9dca5d73604f65a3aa2cd53016220a
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.25921273242
+200: train dataset average log-likelihood:	-3.25921273242
+300: train dataset average log-likelihood:	-3.25921273242
+400: train dataset average log-likelihood:	-3.25921273242
+500: train dataset average log-likelihood:	-3.25921273242
+600: train dataset average log-likelihood:	-3.25921273242
+700: train dataset average log-likelihood:	-3.25921273242
+800: train dataset average log-likelihood:	-3.25921273242
+900: train dataset average log-likelihood:	-3.25921273242
+1000: train dataset average log-likelihood:	-3.25921273242
+
+xi:	6.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.75135808511
+best_expert_test_dataset_average_log_likelihood:	-1.74796028854
+best_expert_accuracy:	0.54 (135/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.25921273242
+learner_test_dataset_average_log_likelihood:	-3.26624785224
+learner_accuracy:	0.096 (24/250)
+bundle_type          : run
+uuid                 : 0xa021e19913d5464a8c197fba7b7e7fc4
+data_hash            : 0xb899e05bd0852b7e6cf096c5156e07ed61630316
+state                : ready
+command              : python zero_one_annealing/zero_one_annealing.py mod3 3 3 3 4 8 10 full_approx
+owner                : sorathan(7)
+name                 : run-python-zero..-10-full_approx
+created              : 2015-02-19 11:10:10
+data_size            : 5.2K
+request_cpus         : 0
+request_gpus         : 0
+time                 : 14m20s
+time_user            : 14m5s
+time_system          : 0.5s
+memory               : 37.2M
+disk_read            : 21.4M
+disk_write           : 0
+docker_image         : codalab/ubuntu:1.6
+exitcode             : 0
+job_handle           : 883867.scail.stanford.edu
+remote               : jude35.stanford.edu/3
+temp_dir             : /juicy/scr62/scr/nlp/data/codalab/home/temp/0xa021e19913d5464a8c197fba7b7e7fc4
+dependencies:
+  zero_one_annealing: zero_one_annealing(0xdd3606c747374e1db5e0743272a0ac39)
+num_samples:	1250
+100: train dataset average log-likelihood:	-3.26507894957
+200: train dataset average log-likelihood:	-3.26507894957
+300: train dataset average log-likelihood:	-3.26507894957
+400: train dataset average log-likelihood:	-3.26507894957
+500: train dataset average log-likelihood:	-3.26507894957
+600: train dataset average log-likelihood:	-3.26507894957
+700: train dataset average log-likelihood:	-3.26507894957
+800: train dataset average log-likelihood:	-3.26507894957
+900: train dataset average log-likelihood:	-3.26507894957
+1000: train dataset average log-likelihood:	-3.26507894957
+
+xi:	8.0
+approx_inference:	2
+num_samples:	10.0
+rangeY:	[3, 3, 9]
+vocab size(X):	5
+fully_supervised?:	False
+
+===== expert statistics =====
+true_theta:	[ 3.  3.  3.  4.]
+best_expert_train_dataset_average_log_likelihood:	-1.59938591782
+best_expert_test_dataset_average_log_likelihood:	-1.59433620002
+best_expert_accuracy:	0.608 (152/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.  0.  0.  0.]
+learner_train_dataset_average_log_likelihood:	-3.26507894957
+learner_test_dataset_average_log_likelihood:	-3.24384761608
+learner_accuracy:	0.112 (28/250)

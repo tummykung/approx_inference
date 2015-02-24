@@ -1,0 +1,15 @@
+generating data...
+done generating data. Total of 960 samples
+
+no relaxation
+best_theta = [ 1.3166882   1.37717585  2.02686573 -0.25344317]
+true_theta = [  5.   5.  10.   2.]
+L2 difference = 9.76424686741
+
+predicting and getting accuracy...
+best_expert_accuracy = 0.96875 (124/128)
+average best_expert_log_likelihood = 0.961876352551
+
+predicting and getting accuracy...
+accuracy = 0.96875 (124/128)
+average log_likelihood = 0.21245832016

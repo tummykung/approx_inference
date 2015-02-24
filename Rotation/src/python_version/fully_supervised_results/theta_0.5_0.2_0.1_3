@@ -1,0 +1,37 @@
+num_samples:	1875
+100: train dataset average log-likelihood:	-6.90013536842
+200: train dataset average log-likelihood:	-6.88908055692
+300: train dataset average log-likelihood:	-6.88555637912
+400: train dataset average log-likelihood:	-6.88417694473
+500: train dataset average log-likelihood:	-6.88159299927
+600: train dataset average log-likelihood:	-6.8800038768
+700: train dataset average log-likelihood:	-6.87853592699
+800: train dataset average log-likelihood:	-6.87784997077
+900: train dataset average log-likelihood:	-6.87739830923
+1000: train dataset average log-likelihood:	-6.87636740133
+1100: train dataset average log-likelihood:	-6.87550797408
+1200: train dataset average log-likelihood:	-6.87458285122
+1300: train dataset average log-likelihood:	-6.87340268407
+1400: train dataset average log-likelihood:	-6.87185629774
+1500: train dataset average log-likelihood:	-6.87037341759
+1600: train dataset average log-likelihood:	-6.86907648802
+1625: train dataset average log-likelihood:	-6.8687651124
+
+xi:	no relaxation
+rangeY:	[9, 9, 9]
+vocab size(X):	5
+fully_supervised?:	True
+
+===== expert statistics =====
+true_theta:	[ 0.5  0.2  0.1  3. ]
+best_expert_train_dataset_average_log_likelihood:	-6.85352577414
+test dataset average log-likelihood:	-6.84764885107
+best_expert_test_dataset_average_log_likelihood:	-6.84764885107
+best_expert_accuracy:	0.02 (5/250)
+
+===== learner statistics =====
+learned_theta:	[ 0.47791418  0.01771077  0.18883283  1.24467745]
+learner_train_dataset_average_log_likelihood:	-6.8687651124
+test dataset average log-likelihood:	-6.86330286749
+learner_test_dataset_average_log_likelihood:	-6.86330286749
+learner_accuracy:	0.02 (5/250)
