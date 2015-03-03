@@ -16,7 +16,7 @@ class ConditionalSampling:
 
     def sample(self, x):
         r = random.uniform(0, 1)
-        print "r: " + str(r)
+        # print "r: " + str(r)
         s = 0
         the_item = (0, 0, 0)
         for item in self.probability[x]:
@@ -25,7 +25,7 @@ class ConditionalSampling:
             if s >= r:
                 the_item = item
                 break
-        print "the_item: " + str(the_item)
+        # print "the_item: " + str(the_item)
         return the_item
 
 

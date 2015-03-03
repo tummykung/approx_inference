@@ -15,7 +15,7 @@ import util.Triplet;
 
 public class LearningTags {
 
-  private static final String TRAIN_FILEPATH = "data/231/temp";
+  private static final String TRAIN_FILEPATH = "data/231/small";
   private static final String TEST_FILEPATH = "data/231/test";
   private static final boolean DEBUG = false;
   private CounterMap<String, String> wordAndPOSFrequencies = new CounterMap<String, String>();

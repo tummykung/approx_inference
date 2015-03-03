@@ -318,11 +318,11 @@ def difference_between_expectations(x, y, theta, Z, xi, M):
     for i in range(M):
         z = sampler.sample(x)
         z = np.array(z)
-        print "z: " + str(z)
+        # print "z: " + str(z)
         w = q_relaxed(y, z, xi)
-        print "w: " + str(w)
+        # print "w: " + str(w)
         the_phi = phi(z, x)
-        print "the_phi: " + str(the_phi)
+        # print "the_phi: " + str(the_phi)
         totalw += w
         total1 += w * the_phi
         total2 += the_phi
@@ -332,12 +332,12 @@ def difference_between_expectations(x, y, theta, Z, xi, M):
     except:
         output = np.array([0.0, 0.0, 0.0, 0.0])
 
-    print "M = " + str(M)
-    print "total1/totalw = " + str(total1/totalw)
-    print "total2/M = " + str(total2/M)
-    print "total1 = " + str(total1)
-    print "totalw = " + str(totalw)
-    print "output: " + str(output)
+    # print "M = " + str(M)
+    # print "total1/totalw = " + str(total1/totalw)
+    # print "total2/M = " + str(total2/M)
+    # print "total1 = " + str(total1)
+    # print "totalw = " + str(totalw)
+    # print "output: " + str(output)
     return output
 
 def expectation_phi(x, theta, Z, approx_inference=0):
