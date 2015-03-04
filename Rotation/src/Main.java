@@ -27,6 +27,20 @@ public class Main {
         CONSTANT_STEP_SIZES = 0,
         DECREASING_STEP_SIZES = 1;
     
+    @Option(required=true)
+    private static boolean fully_supervised = true; // can switch to fully supervised for sanity check
+    @Option(required=false)
+    private static boolean learning_verbose = true;
+    @Option(required=false)
+    private static boolean state_verbose = true;
+    @Option(required=false)
+    private static boolean log_likelihood_verbose = true;
+    @Option(required=false)
+    private static boolean prediction_verbose = false;
+    @Option(required=false)
+    private static boolean sanity_check = false;
+
+    
     public static void main(String[] args) throws Exception {
         // Parse command line
         final Map<String,String> argMap = CommandLineUtils.simpleCommandLineParser(args);
@@ -39,38 +53,17 @@ public class Main {
                     argMap.get("-experimentName") : "SCRATCH";
 
         if (model.equals("LinearChainCRF")) {
-          // N = Length of sequence (sentenceLength)
-          // S = Number of states
-
-          // elements selected from Y times Y 
-          // dimension is S x S
-          double [][] edgeWeights = new double[][]{
-              {1, 10, 1},
-              {3, 4, 1},
-              {1, 2, 3}
-           };
-
-          // elements selected from X times Y
-          // dimension is N x S
-          double [][] nodeWeights = new double[][]{
-              {10, 2, 3},   // at x0
-              {4, 10, 4},   // at x1
-              {4, 3, 20},   // at x2
-              {5, 2, 1}     // at x3
-          };
-          double xi = 10.0;
-          int approx_inference = 0;
-          int M = 10;
-          LinearChainCRF the_model = new LinearChainCRF(
+          ModelAndLearning the_model = new ModelAndLearning(
               seed,
-              edgeWeights,
-              nodeWeights,
-              xi,
-              approx_inference,
-              M
+              fully_supervised,
+              state_verbose,
+              log_likelihood_verbose,
+              prediction_verbose,
+              sanity_check
           );
           int num_samples = 1000;
-          int[][][] data = the_model.generate_data(num_samples);
+          int sentenceLength = 5;
+          int[][][] data = the_model.generate_data(num_samples, sentenceLength);
           double percent_trained = 0.80;
           int num_trained = (int)(percent_trained * data.length);
           int[][][] train_data = Arrays.copyOfRange(data, 0, num_trained);
