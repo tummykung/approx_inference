@@ -17,7 +17,7 @@ public class Example {
   public int[] getOutput() {
     return y;
   }
-  
+
   @Override
   public String toString() {
     return "Input: " + Arrays.toString(x) + "\tOutput:\t" + Arrays.toString(y) + "\n";

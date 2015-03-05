@@ -4,7 +4,7 @@ import java.util.Random;
 
 import util.CartesianProduct;
 import fig.basic.Option;
-
+import fig.basic.LogInfo;
 
 public class ModelAndLearning {
   private ArrayList<Example> data;
@@ -60,7 +60,7 @@ public class ModelAndLearning {
       System.out.println("generating data...");
     }
 
-    // TODO: change this
+    // TODO: generate this from some distribution. e.g., a uniform distribution
     double [][] edgeWeights = new double[][]{
         {1, 10, 1},
         {3, 4, 1},
@@ -97,16 +97,18 @@ public class ModelAndLearning {
     return data;
   }
 
+
   public double[] train(ArrayList<Example> train_data) {
+    LogInfo.begin_track("train");
     // returns: learned_theta
     double[] theta_hat = new double[d];
     double[] theta_hat_average = new double[d];
     int counter = 0;
     for (Example sample : train_data) {
       counter += 1;
-      int[] y = (int[]) sample.getOutput();
-      int[] z = (int[]) sample.getOutput(); // different semantics
-      int[] x = (int[]) sample.getInput();
+      int[] y = sample.getOutput();
+      int[] z = sample.getOutput(); // different semantics
+      int[] x = sample.getInput();
       double[] new_grad = new double[d];
 
       if (Main.fully_supervised) {
@@ -165,6 +167,7 @@ public class ModelAndLearning {
       }
 
     }
+    LogInfo.end_track("train");
     return theta_hat_average;
   }
   

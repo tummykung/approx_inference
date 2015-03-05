@@ -15,6 +15,7 @@ parser.add_option("-v", "--verbose", action="store_true", dest="verbose", defaul
 parser.add_option("--dataset", type="string", dest="dataset", default="../data/char-level")
 parser.add_option("--iterations", type="int", dest="iterations", default=20)
 parser.add_option("--inference", type="int", dest="inference", default=0)
+parser.add_option("--fully-supervised", dest="fully_supervised", default=False)
 
 (options, args) = parser.parse_args()
 if not options.name:
@@ -31,7 +32,6 @@ prefix="state/execs"
 
 if options.compile:
   call(["rm", "-f"] + glob("*.class"))
-  import ipdb; ipdb.set_trace()
   call(["javac", "-cp", ".:%s" % include, "Main.java"])
   call(["mkdir", "-p", "classes/%s" % name])
   call(["mv"] + glob("*.class") + ["classes/%s/" % name])
@@ -51,5 +51,6 @@ if options.run:
     call_args.append("-dataSource %s" % options.dataset)
     call_args.append("-numIters %d" % options.iterations)
     call_args.append("-inferType %d" % options.inference)
+    call_args.append("-fully_supervised %d" % options.fully_supervised)
     run_cmd = lambda : call(shlex.split(" ".join(call_args)))
     run_cmd()

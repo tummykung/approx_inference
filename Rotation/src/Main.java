@@ -42,6 +42,13 @@ public class Main implements Runnable {
     @Option(required=true)
     public static boolean fully_supervised; // can switch to fully supervised for sanity check
 
+    
+    // (optional) flag for generating data
+    @Option(required=false)
+    public static boolean generate_data = true;
+    @Option(required=false)
+    public static String datasource;
+
     // (optional) model parameters
     @Option(required=false)
     public static String experimentName = "SCRATCH";
@@ -52,13 +59,14 @@ public class Main implements Runnable {
     @Option(required=false)
     public static int gradient_descent_type = 0;
     @Option(required=false)
-    public static long M = 10; // the number of samples in approximate inference
+    public static long numiters = 10; // the number of samples in approximate inference
     @Option(required=false)
     public static double xi = 10.0; // the number of samples in approximate inference
     @Option(required=false)
     public static long seed = 12345671;
 
     // (optional) flags
+    @Option(required=false)
     public static boolean learning_verbose = false;
     @Option(required=false)
     public static boolean state_verbose = true;
@@ -94,14 +102,21 @@ public class Main implements Runnable {
     void runWithException() throws Exception {
       if (model.equals("LinearChainCRF")) {
         ModelAndLearning the_model = new ModelAndLearning();
-        int num_samples = 1000;
+        int num_samples = 100;
         int sentenceLength = 5;
+        if (!generate_data) {
+          for (String line : fig.basic.IOUtils.readLinesHard("data/a.txt")) {
+            System.out.println(line);
+          }
+        }
+        
+        System.exit(0);
         ArrayList<Example> data = the_model.generate_data(num_samples, sentenceLength);
         double percent_trained = 0.80;
         int num_trained = (int)(percent_trained * data.size());
         ArrayList<Example> train_data = new ArrayList<Example>();
         ArrayList<Example> test_data = new ArrayList<Example>();
-        for(int i = 0; i < num_trained; i++) {
+        for(int i = 0; i < data.size(); i++) {
           if(i < num_trained) {
             train_data.add(data.get(i));
           } else {
@@ -110,8 +125,16 @@ public class Main implements Runnable {
         }
 
         if (debug_verbose) {
-          System.out.println("train_data: " + train_data);
-          System.out.println("test_data: " + test_data);
+          System.out.println("----------BEGIN:train_data----------");
+          for(Example example : train_data) {
+            System.out.println(example);
+          }
+          System.out.println("----------END:train_data----------");
+          System.out.println("----------BEGIN:test_data----------");
+          for(Example example : test_data) {
+            System.out.println(example);
+          }
+          System.out.println("----------END:test_data----------");
         }
 
         the_model.train(train_data);

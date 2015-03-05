@@ -43,4 +43,8 @@ public class Pair<F,S> {
     this.first = first;
     this.second = second;
   }
+
+  public static <E,F> Pair<E,F> make(E car, F cdr){
+    return new Pair<E,F>(car, cdr);
+  }
 }
