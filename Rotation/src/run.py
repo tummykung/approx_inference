@@ -12,10 +12,11 @@ parser.add_option("-g", type="int", dest="memory", default=5)
 parser.add_option("--java-help", action="store_true", dest="java_help", default=False)
 parser.add_option("--tail", type="int", dest="tail", default=5)
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False)
-parser.add_option("--dataset", type="string", dest="dataset", default="../data/char-level")
+parser.add_option("--dataset", type="string", dest="dataset", default="../data/a.txt")
 parser.add_option("--iterations", type="int", dest="iterations", default=20)
 parser.add_option("--inference", type="int", dest="inference", default=0)
-parser.add_option("--fully-supervised", dest="fully_supervised", default=False)
+parser.add_option("--fully_supervised", dest="fully_supervised", default=False)
+parser.add_option("--generate_data", default=False)
 
 (options, args) = parser.parse_args()
 if not options.name:
@@ -27,7 +28,7 @@ from glob import glob
 import shlex
 import threading
 import time
-include="lib/fig.jar"
+include="lib/fig.jar:lib/stanford-corenlp-3.5.1.jar"
 prefix="state/execs"
 
 if options.compile:
@@ -52,5 +53,9 @@ if options.run:
     call_args.append("-numIters %d" % options.iterations)
     call_args.append("-inferType %d" % options.inference)
     call_args.append("-fully_supervised %d" % options.fully_supervised)
-    run_cmd = lambda : call(shlex.split(" ".join(call_args)))
+    call_args.append("-generate_data %s" % options.generate_data)
+    command_to_run = " ".join(call_args)
+    print("calling...")
+    print(command_to_run)
+    run_cmd = lambda : call(shlex.split(command_to_run))
     run_cmd()

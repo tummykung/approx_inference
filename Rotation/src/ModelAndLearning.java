@@ -88,6 +88,7 @@ public class ModelAndLearning {
       data.add(example);
     }
 
+    System.out.println("state_verbose = " + Main.state_verbose);
     if(Main.state_verbose) {
       System.out.println("done genetaing data.\nnum data instances: " + data.size());
       if(data.size() < 100) {
