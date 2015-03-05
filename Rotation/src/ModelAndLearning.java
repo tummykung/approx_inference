@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -6,47 +7,18 @@ import fig.basic.Option;
 
 
 public class ModelAndLearning {
-  private int[][][] data;
-  private long seed;
+  private ArrayList<Example> data;
   LinearChainCRF the_model_for_each_x;
   private Random randomizer;
+
   
-  @Option(required=true)
-  private boolean fully_supervised;
-  @Option(required=false)
-  private boolean learning_verbose;
-  @Option(required=false)
-  private boolean state_verbose;
-  @Option(required=false)
-  private boolean log_likelihood_verbose;
-  @Option(required=false)
-  private boolean prediction_verbose;
-  @Option(required=false)
-  private boolean sanity_check;
-  private double eta0 = 0.01; // gradient descent initial step size
-  private int gradient_descent_type = 0;
   // 0 = constant step size
   // 1 = decreasing step size
-  private double xi;
-  private int approx_inference;
-  private int M;
+ 
   private int d; // dimension of the parameters
   private double eta; // stepsize
   
-  public ModelAndLearning(
-      long seed,
-      boolean fully_supervised,
-      boolean state_verbose,
-      boolean log_likelihood_verbose,
-      boolean prediction_verbose,
-      boolean sanity_check
-     ) {
-    this.seed = seed;
-    this.fully_supervised = fully_supervised;
-    this.state_verbose = state_verbose;
-    this.log_likelihood_verbose = log_likelihood_verbose;
-    this.prediction_verbose = prediction_verbose;
-    this.sanity_check = sanity_check;
+  public ModelAndLearning() {
     // N = Length of sequence (sentenceLength)
     // S = Number of states
 
@@ -66,17 +38,15 @@ public class ModelAndLearning {
         {4, 3, 20},   // at x2
         {5, 2, 1}     // at x3
     };
-    xi = 10.0;
-    approx_inference = 0;
-    M = 10;
-    randomizer = new Random(seed);
+    randomizer = new Random(Main.seed);
   }
 
-  public int[][][] generate_data(int num_samples, int sentenceLength) {
+  public ArrayList<Example> generate_data(int num_samples, int sentenceLength) {
     // return[n][0] = x is int[] and return[n][1] = y is also int[]
     // and n is the num sample iterator
 
-    data = new int[num_samples][2][sentenceLength];
+    data = new ArrayList<Example>();
+    // int[num_samples][2][sentenceLength];
     // given parameters, generate data according to a log-linear model
     // fully supervised:
     // p_{theta}(y | x) = 1/Z(theta; x) * exp(theta' * phi(x, z))
@@ -86,10 +56,10 @@ public class ModelAndLearning {
     // p_{theta}(z | x) = 1/Zp(theta; x) * exp(theta' * phi(x, z))
     // q_{xi}(y | z) = 1/Zq(xi; z) * exp(xi' * psi(y, z))
 
-    if(state_verbose) {
+    if(Main.state_verbose) {
       System.out.println("generating data...");
     }
-    
+
     // TODO: change this
     double [][] edgeWeights = new double[][]{
         {1, 10, 1},
@@ -106,50 +76,40 @@ public class ModelAndLearning {
         {5, 2, 1}     // at x3
     };
     LinearChainCRF the_model_for_each_x = new LinearChainCRF(
-        seed,
         edgeWeights,
-        nodeWeights,
-        xi,
-        approx_inference,
-        M,
-        fully_supervised,
-        state_verbose,
-        log_likelihood_verbose,
-        prediction_verbose,
-        sanity_check
+        nodeWeights
     );
     the_model_for_each_x.inferState();
-    
 
     for (int i = 0; i < num_samples; i++) {
-      int[] seq = the_model_for_each_x.sample(randomizer);
-      data[i][0] = seq;
-      // TODO: change weight based on x. Right now just do identical.
-      data[i][1] = seq;
+       int[] seq = the_model_for_each_x.sample(randomizer);
+      Example example = new Example(seq, seq);
+      // TODO: change weight based on x. Right now just do identical
+      data.add(example);
     }
 
-    if(state_verbose) {
-      System.out.println("done genetaing data.\nnum data instances: " + data.length);
-      if(data.length < 100) {
-        System.out.println("data: " + Arrays.deepToString(data));
+    if(Main.state_verbose) {
+      System.out.println("done genetaing data.\nnum data instances: " + data.size());
+      if(data.size() < 100) {
+        System.out.println("data: " + data);
       }
     }
     return data;
   }
 
-  public double[] train(int[][][] train_data) {
+  public double[] train(ArrayList<Example> train_data) {
     // returns: learned_theta
     double[] theta_hat = new double[d];
     double[] theta_hat_average = new double[d];
     int counter = 0;
-    for (int[][] sample : train_data) {
+    for (Example sample : train_data) {
       counter += 1;
-      int[] y = sample[0];
-      int[] z = sample[0]; // different semantics
-      int[] x = sample[1];
+      int[] y = (int[]) sample.getOutput();
+      int[] z = (int[]) sample.getOutput(); // different semantics
+      int[] x = (int[]) sample.getInput();
       double[] new_grad = new double[d];
 
-      if (fully_supervised) {
+      if (Main.fully_supervised) {
 //        double[] gradient = the_model_for_each_x.phi(z, x); // TODO: recover this
           double[] gradient = new double[d];
 //        Z = calculate_Z(x, theta_hat)
@@ -179,10 +139,10 @@ public class ModelAndLearning {
 //          new_grad = difference_between_expectations(x, y, theta_hat, Z, xi, M)
       }
 
-      if(gradient_descent_type == Main.DECREASING_STEP_SIZES) {
-        eta = eta0 * 1.00/Math.sqrt(counter);
-      } else if (gradient_descent_type == Main.CONSTANT_STEP_SIZES){
-        eta = eta0;
+      if(Main.gradient_descent_type == Main.DECREASING_STEP_SIZES) {
+        eta = Main.eta0 * 1.00/Math.sqrt(counter);
+      } else if (Main.gradient_descent_type == Main.CONSTANT_STEP_SIZES){
+        eta = Main.eta0;
       }
 
       for(int i = 0; i < d; i++) {
@@ -192,7 +152,7 @@ public class ModelAndLearning {
             1/(double)counter*theta_hat[i];
       }
       
-      if((log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.length)) {
+      if((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
         double average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat_average);
         System.out.println(
             counter + 
@@ -200,7 +160,7 @@ public class ModelAndLearning {
             average_log_likelihood
         );
       }
-      if(learning_verbose) {
+      if(Main.learning_verbose) {
         System.out.println(counter + ": theta_hat_average:\t" + Arrays.toString(theta_hat_average));
       }
 
@@ -208,18 +168,18 @@ public class ModelAndLearning {
     return theta_hat_average;
   }
   
-  public double calculate_average_log_likelihood(int[][][] train_data, double theta[]) {
+  public double calculate_average_log_likelihood(ArrayList<Example> train_data, double theta[]) {
     double total_log_likelihood = 0.0;
     int count = 0;
-    for (int[][] sample : train_data) {
+    for (Example sample : train_data) {
       count += 1;
-      int[] y = sample[0];
-      int[] z = sample[0];
-      int[] x = sample[1];
-      if(fully_supervised) {
+      int[] y = (int[]) sample.getOutput();
+      int[] z = (int[]) sample.getOutput(); // different semantics
+      int[] x = (int[]) sample.getInput();
+      if(Main.fully_supervised) {
         total_log_likelihood += Math.log(p(z, x, theta));
       } else {
-        total_log_likelihood += Math.log(real_p(y, x, theta, xi));
+        total_log_likelihood += Math.log(real_p(y, x, theta, Main.xi));
       }
     }
     return total_log_likelihood/(double)count;
