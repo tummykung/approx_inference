@@ -30,6 +30,7 @@ public class LinearChainCRF {
 
   public double[] phi(int[] z, int[] x) {
     double[] output = new double[1]; // TODO: fix this
+    
 //    for (int aIndex = 0; aIndex < numY; aIndex++) {
 //      for (int cIndex = 0; cIndex < numX; cIndex++) {
 //        output[indexEmission(aIndex, cIndex)] = 1;

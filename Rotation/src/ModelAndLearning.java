@@ -1,9 +1,12 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
-import util.CartesianProduct;
-import fig.basic.Option;
+import util.Pair;
+import edu.stanford.nlp.stats.Counter;
 import fig.basic.LogInfo;
 
 public class ModelAndLearning {
@@ -11,13 +14,74 @@ public class ModelAndLearning {
   LinearChainCRF the_model_for_each_x;
   private Random randomizer;
 
-  
   // 0 = constant step size
   // 1 = decreasing step size
  
   private int d; // dimension of the parameters
   private double eta; // stepsize
+
+  private static <E> Set<E> mkSet(E[] array){
+    Set<E> rtn = new HashSet<E>();
+    Collections.addAll(rtn, array);
+    return rtn;
+  }
+
+  private static final Set<Object> ACTIVE_FEATURES = mkSet(new Object[]{
+      Feature.ExactMatch.class
+  });
   
+  public FeatureExtractor<Example,Feature,Boolean> extractor = new FeatureExtractor<Example, Feature, Boolean>() {
+    private <E> Feature feature(Class<E> clazz, Example example, Option count){
+      //--Features
+      if(clazz.equals(Feature.ExactMatch.class)){
+        //(exact string match)
+        return new Feature.ExactMatch(example.getInput().equals(example.getOutput()));
+      }
+      else
+      {
+        throw new IllegalArgumentException("Unregistered feature: " + clazz);
+      }
+    }
+
+    @SuppressWarnings({"unchecked"})
+    @Override
+    protected void fillFeatures(Example example, Counter<Feature> inFeatures, Boolean output, Counter<Feature> outFeatures) {
+      //--Input Features
+      for(Object o : ACTIVE_FEATURES){
+        if(o instanceof Class){
+          //(case: singleton feature)
+          Option<Double> count = new Option<Double>(1.0);
+          Feature feat = feature((Class) o, example, count);
+          if(count.get() > 0.0){
+            inFeatures.incrementCount(feat, count.get());
+          }
+        } else if(o instanceof Pair){
+          //(case: pair of features)
+          Pair<Class,Class> pair = (Pair<Class,Class>) o;
+          Option<Double> countA = new Option<Double>(1.0);
+          Option<Double> countB = new Option<Double>(1.0);
+          Feature featA = feature(pair.getFirst(), example, countA);
+          Feature featB = feature(pair.getSecond(), example, countB);
+          if(countA.get() * countB.get() > 0.0){
+            inFeatures.incrementCount(new Feature.PairFeature(featA, featB), countA.get() * countB.get());
+          }
+        }
+      }
+
+      //--Output Features
+      if(output != null){
+        outFeatures.incrementCount(new Feature.CoreferentIndicator(output), 1.0);
+      }
+    }
+
+    @Override
+    protected Feature concat(Feature a, Feature b) {
+      return new Feature.PairFeature(a,b);
+    }
+  };
+
+
+
   public ModelAndLearning() {
     // N = Length of sequence (sentenceLength)
     // S = Number of states
@@ -101,6 +165,7 @@ public class ModelAndLearning {
 
   public double[] train(ArrayList<Example> train_data) {
     LogInfo.begin_track("train");
+
     // returns: learned_theta
     double[] theta_hat = new double[d];
     double[] theta_hat_average = new double[d];
@@ -197,8 +262,7 @@ public class ModelAndLearning {
   public double p(int[] z, int[] x, double[] theta) {
     // TODO
     return 1;
-  }
-  
+  }  
   public double[] expectation_phi(int[] x, double[] theta) {
     double[] total = new double[d];
 //    int[] indicesForZ = new int[numY];
@@ -252,5 +316,14 @@ public class ModelAndLearning {
 //
 //    return output
     return 0.0;
+  }
+
+  private class Option<T> {
+    private T obj;
+    public Option(T obj){ this.obj = obj; }
+    public Option(){};
+    public T get(){ return obj; }
+    public void set(T obj){ this.obj = obj; }
+    public boolean exists(){ return obj != null; }
   }
 }
