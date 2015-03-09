@@ -91,7 +91,6 @@ public class ModelAndLearning {
   public Params train(ArrayList<Example> train_data) {
     LogInfo.begin_track("train");
     int featureTemplateNum = Main.sentenceLength;
-    Params params = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
     K = Main.rangeY * Main.rangeY + Main.rangeY * Main.rangeX;
     // returns: learned_theta
     Params theta_hat = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
@@ -106,41 +105,41 @@ public class ModelAndLearning {
       Params new_grad = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
 
       if (Main.fully_supervised) {
-//        double[] gradient = the_model_for_each_x.phi(z, x); // TODO: recover this
         //initialize
         Params gradient = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
-//        Z = calculate_Z(x, theta_hat)
-//        E_grad_phi = expectation_phi(x, theta_hat, Z, approx_inference) // old version
-
-        double[][] nodeWeights = new double[x.length][Main.rangeZ];
-        double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
+        for(int i = 0; i < L; i++) {
+          if (i < L - 1)
+            gradient.transitions[z[i]][z[i + 1]] += 1;
+          gradient.emissions[i][z[i]][x[i]] += 1;
+        }
+        if (Main.extra_verbose) {
+          LogInfo.logs("x = " + Arrays.toString(x));
+          LogInfo.logs("z = " + Arrays.toString(z));
+          gradient.print("gradient");
+        }
 
         // TODO: check that edgeWeights is correct
+        double[][] nodeWeights = new double[x.length][Main.rangeZ];
+        double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
         for (int a = 0; a < Main.rangeZ; a++)
           for (int b = 0; b < Main.rangeZ; b++)
-            edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
+            edgeWeights[a][b] = Math.exp(theta_hat.transitions[a][b]);
         for (int i = 0; i < L; i++)
           for (int a = 0; a < Main.rangeZ; a++)
-            nodeWeights[i][a] = Math.exp(params.emissions[i][a][x[i]]);
-
-        if (Main.extra_verbose) {
-          LogInfo.logs("edgeWeights = " + Fmt.D(edgeWeights));
-          LogInfo.logs("nodeWeights = " + Fmt.D(nodeWeights));
-        }
+            nodeWeights[i][a] = Math.exp(theta_hat.emissions[i][a][x[i]]);
         ForwardBackward the_model_for_each_x = new ForwardBackward(edgeWeights, nodeWeights);
         the_model_for_each_x.infer();
 
-        Params E_grad_phi = expectation_cap_phi(x, theta_hat, params, the_model_for_each_x);
-        Params grad_log_Z = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
-        
+        Params E_grad_phi = expectation_cap_phi(x, theta_hat, the_model_for_each_x);
+
         // subtract
         for (int a = 0; a < Main.rangeZ; a++)
           for (int b = 0; b < Main.rangeZ; b++)
-            grad_log_Z.transitions[a][b] = gradient.transitions[a][b] - E_grad_phi.transitions[a][b];
+            new_grad.transitions[a][b] = gradient.transitions[a][b] - E_grad_phi.transitions[a][b];
         for (int i = 0; i < L; i++)
           for (int a = 0; a < Main.rangeZ; a++)
             for (int c = 0; c < Main.rangeX; c++)
-              grad_log_Z.emissions[i][a][c] = gradient.emissions[i][a][c] - E_grad_phi.emissions[i][a][c];
+              new_grad.emissions[i][a][c] = gradient.emissions[i][a][c] - E_grad_phi.emissions[i][a][c];
       } else {
 //        Z = calculate_Z(x, theta_hat)
 //        if approx_inference == 1:
@@ -167,6 +166,14 @@ public class ModelAndLearning {
         eta = Main.eta0;
       }
 
+      if (Main.extra_verbose) {
+        System.out.println("=====BEGIN DEBUG ZONE=====");
+        new_grad.print("new_grad");
+        theta_hat.print("theta_hat");
+        theta_hat_average.print("theta_hat_average");
+        System.out.println("=====END DEBUG ZONE=====");
+      }
+
       for (int a = 0; a < Main.rangeZ; a++)
         for (int b = 0; b < Main.rangeZ; b++) {
           theta_hat.transitions[a][b] = eta * new_grad.transitions[a][b];
@@ -185,7 +192,7 @@ public class ModelAndLearning {
 
 
       if ((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
-        double average_log_likelihood = calculate_average_log_likelihood(train_data, params);
+        double average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat);
         LogInfo.logs(
             counter + 
             ": train dataset average log-likelihood:\t" +
@@ -193,8 +200,8 @@ public class ModelAndLearning {
         );
       }
       if (Main.learning_verbose) {
-        LogInfo.logs(counter + ": theta_hat_average.emissions:\t" + Fmt.D(theta_hat_average.emissions));
-        LogInfo.logs(counter + ": theta_hat_average.transitions:\t" + Fmt.D(theta_hat_average.transitions));
+        LogInfo.logs(counter + ": theta_hat_average");
+        theta_hat_average.print("theta_hat_average");
       }
 
     }
@@ -211,8 +218,18 @@ public class ModelAndLearning {
       int[] z = (int[]) sample.getOutput(); // different semantics
       int[] x = (int[]) sample.getInput();
      
-      // TODO: correctly compute logZ from ForwardBackward
-      double logZ = 0;
+   // TODO: check that edgeWeights is correct
+      double[][] nodeWeights = new double[x.length][Main.rangeZ];
+      double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
+      for (int a = 0; a < Main.rangeZ; a++)
+        for (int b = 0; b < Main.rangeZ; b++)
+          edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
+      for (int i = 0; i < x.length; i++)
+        for (int a = 0; a < Main.rangeZ; a++)
+          nodeWeights[i][a] = Math.exp(params.emissions[i][a][x[i]]);
+      ForwardBackward the_model_for_each_x = new ForwardBackward(edgeWeights, nodeWeights);
+      the_model_for_each_x.infer();
+      double logZ = the_model_for_each_x.getLogZ();
       
       if(Main.fully_supervised) {
         total_log_likelihood += logP(z, x, params, logZ);
@@ -239,7 +256,7 @@ public class ModelAndLearning {
     return the_sum - logZ;
   }
 
-  public Params expectation_cap_phi(int[] x, Params theta_hat, Params params, ForwardBackward fwbw) {
+  public Params expectation_cap_phi(int[] x, Params params, ForwardBackward fwbw) {
     Params totalParams = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
     int L = x.length;
 
