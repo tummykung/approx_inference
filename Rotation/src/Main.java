@@ -25,7 +25,8 @@ public class Main implements Runnable {
         APPROX_BOTH_TERMS = 3;
     final public static int
         CONSTANT_STEP_SIZES = 0,
-        DECREASING_STEP_SIZES = 1;
+        DECREASING_STEP_SIZES = 1,
+        ADAGRAD = 2;
 
     @Option(required=true)
     public static long inferType;
@@ -57,7 +58,7 @@ public class Main implements Runnable {
     @Option(required=false)
     public static double eta0 = 0.01; // gradient descent initial step size
     @Option(required=false)
-    public static int gradient_descent_type = 0;
+    public static int gradient_descent_type = ADAGRAD;
     @Option(required=false)
     public static long numiters = 10; // the number of samples in approximate inference
     @Option(required=false)
@@ -88,11 +89,11 @@ public class Main implements Runnable {
     @Option(required=false)
     public static int sentenceLength = 5;
     @Option(required=false)
-    public static int rangeX = 3;
+    public static int rangeX = 5;
     @Option(required=false)
-    public static int rangeY = 3;
+    public static int rangeY = 5;
     @Option(required=false)
-    public static int rangeZ = 3;
+    public static int rangeZ = 5;
 
     public static void main(String[] args) throws Exception {
       OptionsParser parser = new OptionsParser();

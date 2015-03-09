@@ -164,8 +164,10 @@ public class ModelAndLearning {
         eta = Main.eta0 * 1.00/Math.sqrt(counter);
       } else if (Main.gradient_descent_type == Main.CONSTANT_STEP_SIZES){
         eta = Main.eta0;
+      } else if (Main.gradient_descent_type == Main.ADAGRAD){
+        eta = Main.eta0 * 1.00/Math.sqrt(counter);
       }
-
+ 
       if (Main.extra_verbose) {
         System.out.println("=====BEGIN DEBUG ZONE=====");
         new_grad.print("new_grad");
@@ -253,7 +255,9 @@ public class ModelAndLearning {
       }
       the_sum += params.emissions[i][z[i]][x[i]];
     }
-    return the_sum - logZ;
+    double to_return = the_sum - logZ;
+    assert to_return < 0;
+    return to_return;
   }
 
   public Params expectation_cap_phi(int[] x, Params params, ForwardBackward fwbw) {
