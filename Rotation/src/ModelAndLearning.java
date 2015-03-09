@@ -1,3 +1,4 @@
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,76 +12,14 @@ import fig.basic.LogInfo;
 
 public class ModelAndLearning {
   private ArrayList<Example> data;
-  LinearChainCRF the_model_for_each_x;
+  ForwardBackward the_model_for_each_x;
   private Random randomizer;
 
   // 0 = constant step size
   // 1 = decreasing step size
  
-  private int d; // dimension of the parameters
+  private int K; // the number of features
   private double eta; // stepsize
-
-  private static <E> Set<E> mkSet(E[] array){
-    Set<E> rtn = new HashSet<E>();
-    Collections.addAll(rtn, array);
-    return rtn;
-  }
-
-  private static final Set<Object> ACTIVE_FEATURES = mkSet(new Object[]{
-      Feature.ExactMatch.class
-  });
-  
-  public FeatureExtractor<Example,Feature,Boolean> extractor = new FeatureExtractor<Example, Feature, Boolean>() {
-    private <E> Feature feature(Class<E> clazz, Example example, Option count){
-      //--Features
-      if(clazz.equals(Feature.ExactMatch.class)){
-        //(exact string match)
-        return new Feature.ExactMatch(example.getInput().equals(example.getOutput()));
-      }
-      else
-      {
-        throw new IllegalArgumentException("Unregistered feature: " + clazz);
-      }
-    }
-
-    @SuppressWarnings({"unchecked"})
-    @Override
-    protected void fillFeatures(Example example, Counter<Feature> inFeatures, Boolean output, Counter<Feature> outFeatures) {
-      //--Input Features
-      for(Object o : ACTIVE_FEATURES){
-        if(o instanceof Class){
-          //(case: singleton feature)
-          Option<Double> count = new Option<Double>(1.0);
-          Feature feat = feature((Class) o, example, count);
-          if(count.get() > 0.0){
-            inFeatures.incrementCount(feat, count.get());
-          }
-        } else if(o instanceof Pair){
-          //(case: pair of features)
-          Pair<Class,Class> pair = (Pair<Class,Class>) o;
-          Option<Double> countA = new Option<Double>(1.0);
-          Option<Double> countB = new Option<Double>(1.0);
-          Feature featA = feature(pair.getFirst(), example, countA);
-          Feature featB = feature(pair.getSecond(), example, countB);
-          if(countA.get() * countB.get() > 0.0){
-            inFeatures.incrementCount(new Feature.PairFeature(featA, featB), countA.get() * countB.get());
-          }
-        }
-      }
-
-      //--Output Features
-      if(output != null){
-        outFeatures.incrementCount(new Feature.CoreferentIndicator(output), 1.0);
-      }
-    }
-
-    @Override
-    protected Feature concat(Feature a, Feature b) {
-      return new Feature.PairFeature(a,b);
-    }
-  };
-
-
 
   public ModelAndLearning() {
     // N = Length of sequence (sentenceLength)
@@ -105,9 +44,10 @@ public class ModelAndLearning {
     randomizer = new Random(Main.seed);
   }
 
-  public ArrayList<Example> generate_data(int num_samples, int sentenceLength) {
+  public ArrayList<Example> generate_data() {
     // return[n][0] = x is int[] and return[n][1] = y is also int[]
     // and n is the num sample iterator
+    // TODO:  generate x from a uniform distribution and sample y.
 
     data = new ArrayList<Example>();
     // int[num_samples][2][sentenceLength];
@@ -139,20 +79,19 @@ public class ModelAndLearning {
         {4, 3, 20},   // at x2
         {5, 2, 1}     // at x3
     };
-    LinearChainCRF the_model_for_each_x = new LinearChainCRF(
+    ForwardBackward the_model_for_each_x = new ForwardBackward(
         edgeWeights,
         nodeWeights
     );
-    the_model_for_each_x.inferState();
+    the_model_for_each_x.infer();
 
-    for (int i = 0; i < num_samples; i++) {
+    for (int i = 0; i < Main.num_samples; i++) {
        int[] seq = the_model_for_each_x.sample(randomizer);
       Example example = new Example(seq, seq);
       // TODO: change weight based on x. Right now just do identical
       data.add(example);
     }
 
-    System.out.println("state_verbose = " + Main.state_verbose);
     if(Main.state_verbose) {
       System.out.println("done genetaing data.\nnum data instances: " + data.size());
       if(data.size() < 100) {
@@ -165,27 +104,35 @@ public class ModelAndLearning {
 
   public double[] train(ArrayList<Example> train_data) {
     LogInfo.begin_track("train");
-
+    Params params = new Params(Main.rangeX, Main.rangeY);
+    K = Main.rangeY * Main.rangeY + Main.rangeY * Main.rangeX;
     // returns: learned_theta
-    double[] theta_hat = new double[d];
-    double[] theta_hat_average = new double[d];
+    double[] theta_hat = new double[K];
+    double[] theta_hat_average = new double[K];
     int counter = 0;
     for (Example sample : train_data) {
       counter += 1;
       int[] y = sample.getOutput();
       int[] z = sample.getOutput(); // different semantics
       int[] x = sample.getInput();
-      double[] new_grad = new double[d];
+      double[] new_grad = new double[K];
 
       if (Main.fully_supervised) {
 //        double[] gradient = the_model_for_each_x.phi(z, x); // TODO: recover this
-          double[] gradient = new double[d];
+          double[] gradient = new double[K];
 //        Z = calculate_Z(x, theta_hat)
 //        E_grad_phi = expectation_phi(x, theta_hat, Z, approx_inference) // old version
-          double[] E_grad_phi = expectation_phi(x, theta_hat);
-          double[] grad_log_Z = new double[d];
-          for(int i = 0; i< d; i++)
-            grad_log_Z[i] = gradient[i] - E_grad_phi[i];
+
+          ForwardBackward the_model_for_each_x = new ForwardBackward(
+              params.transitions,
+              params.emissions
+          );
+          the_model_for_each_x.infer();
+
+          double[] E_grad_phi = expectation_cap_phi(x, theta_hat, params, the_model_for_each_x);
+          double[] grad_log_Z = new double[K];
+          for(int k = 0; k < K; k++)
+            grad_log_Z[k] = gradient[k] - E_grad_phi[k];
           new_grad = grad_log_Z;
       } else {
 //        Z = calculate_Z(x, theta_hat)
@@ -213,7 +160,7 @@ public class ModelAndLearning {
         eta = Main.eta0;
       }
 
-      for(int i = 0; i < d; i++) {
+      for(int i = 0; i < K; i++) {
         theta_hat[i] += eta * new_grad[i];
         theta_hat_average[i] =
             (counter - 1)/(double)counter*theta_hat_average[i] +
@@ -222,14 +169,14 @@ public class ModelAndLearning {
       
       if((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
         double average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat_average);
-        System.out.println(
+        LogInfo.logs(
             counter + 
             ": train dataset average log-likelihood:\t" +
             average_log_likelihood
         );
       }
       if(Main.learning_verbose) {
-        System.out.println(counter + ": theta_hat_average:\t" + Arrays.toString(theta_hat_average));
+        LogInfo.logs(counter + ": theta_hat_average:\t" + Arrays.toString(theta_hat_average));
       }
 
     }
@@ -262,9 +209,28 @@ public class ModelAndLearning {
   public double p(int[] z, int[] x, double[] theta) {
     // TODO
     return 1;
-  }  
-  public double[] expectation_phi(int[] x, double[] theta) {
-    double[] total = new double[d];
+  }
+
+  public double[] expectation_cap_phi(int[] x, double[] theta, Params params, ForwardBackward fwbw) {
+    double[] total = new double[K];
+    int L = x.length;
+
+    if(Main.inferType == Main.EXACT) {
+      for(int k = 0; k < K; k++) {
+        double the_sum = 0.0;
+        for(int i = 0; i < L; i++) {
+          double[][] posteriors = new double[Main.rangeY][Main.rangeY];
+          fwbw.getEdgePosteriors(i, posteriors);
+          for(int yi = 0; yi < Main.rangeY; yi++) {
+            for(int yiminus1 = 0; yiminus1 < Main.rangeY; yiminus1++) {
+              the_sum += params.emissions[yi][yiminus1] * posteriors[yi][yiminus1];
+            }
+          }
+        }
+        total[k] = the_sum;
+        System.out.println("the_sum = " + the_sum);
+      }
+    }
 //    int[] indicesForZ = new int[numY];
 //    for(int i = 0; i < numY; i++) {
 //      indicesForZ[i] = numY; //TODO: check this
@@ -278,7 +244,7 @@ public class ModelAndLearning {
 //    }
     return total;
   }
-  
+
   public double difference_between_expectations(
       int[] x, int[] y, double[] theta, double Z) {
 //    TODO
@@ -316,14 +282,5 @@ public class ModelAndLearning {
 //
 //    return output
     return 0.0;
-  }
-
-  private class Option<T> {
-    private T obj;
-    public Option(T obj){ this.obj = obj; }
-    public Option(){};
-    public T get(){ return obj; }
-    public void set(T obj){ this.obj = obj; }
-    public boolean exists(){ return obj != null; }
   }
 }

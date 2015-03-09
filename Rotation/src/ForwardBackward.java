@@ -10,8 +10,7 @@ public class ForwardBackward {
   private int[][] prevStates, nextStates; // optional (if transitions are sparse)
   private int N; // Length of sequence
   private int S; // Number of states
-  
-  
+
   // Intermediate
   private double[][] inside; // Sum over all weights after node (including node potential)
   private double[][] outside; // Sum over all weights before a node

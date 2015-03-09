@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 
 public class Example {
   private int[] x;
