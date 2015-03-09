@@ -24,25 +24,6 @@ public class ModelAndLearning {
   private double eta; // stepsize
 
   public ModelAndLearning() {
-    // N = Length of sequence (sentenceLength)
-    // S = Number of states
-
-    // elements selected from Y times Y 
-    // dimension is S x S
-    double [][] edgeWeights = new double[][]{
-        {1, 10, 1},
-        {3, 4, 1},
-        {1, 2, 3}
-     };
-
-    // elements selected from X times Y
-    // dimension is N x S
-    double [][] nodeWeights = new double[][]{
-        {10, 2, 3},   // at x0
-        {4, 10, 4},   // at x1
-        {4, 3, 20},   // at x2
-        {5, 2, 1}     // at x3
-    };
     randomizer = new Random(Main.seed);
   }
 
@@ -67,7 +48,9 @@ public class ModelAndLearning {
       System.out.println("generating data...");
     }
 
-    // TODO: generate this from some distribution. e.g., a uniform distribution
+    // FIXME: generate this from some distribution. e.g., a uniform distribution
+    // the things below are p(y) only, not p(y | x). but it's good enough
+    // for testing emission probability updates.
     double [][] edgeWeights = new double[][]{
         {1, 10, 1},
         {3, 4, 1},
@@ -105,14 +88,14 @@ public class ModelAndLearning {
     return data;
   }
 
-  public double[] train(ArrayList<Example> train_data) {
+  public Params train(ArrayList<Example> train_data) {
     LogInfo.begin_track("train");
     int featureTemplateNum = Main.sentenceLength;
     Params params = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
     K = Main.rangeY * Main.rangeY + Main.rangeY * Main.rangeX;
     // returns: learned_theta
-    double[] theta_hat = new double[K];
-    double[] theta_hat_average = new double[K];
+    Params theta_hat = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
+    Params theta_hat_average = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
     int counter = 0;
     for (Example sample : train_data) {
       counter += 1;
@@ -120,46 +103,44 @@ public class ModelAndLearning {
       int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
       int[] x = sample.getInput();
       int L = x.length;
-      double[] new_grad = new double[K];
+      Params new_grad = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
 
       if (Main.fully_supervised) {
 //        double[] gradient = the_model_for_each_x.phi(z, x); // TODO: recover this
-          double[] gradient = new double[K];
+        //initialize
+        Params gradient = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
 //        Z = calculate_Z(x, theta_hat)
 //        E_grad_phi = expectation_phi(x, theta_hat, Z, approx_inference) // old version
 
+        double[][] nodeWeights = new double[x.length][Main.rangeZ];
+        double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
 
-          double[][] nodeWeights = new double[x.length][Main.rangeZ];
-          double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
-          
-          // TODO: check that edgeWeights is correct
-          for (int a = 0; a < Main.rangeZ; a++) {
-            for (int b = 0; b < Main.rangeZ; b++) {
-              edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
-            }
-          }
+        // TODO: check that edgeWeights is correct
+        for (int a = 0; a < Main.rangeZ; a++)
+          for (int b = 0; b < Main.rangeZ; b++)
+            edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
+        for (int i = 0; i < L; i++)
+          for (int a = 0; a < Main.rangeZ; a++)
+            nodeWeights[i][a] = Math.exp(params.emissions[i][a][x[i]]);
 
-          for (int i = 0; i < L; i++) {
-            for (int a = 0; a < Main.rangeZ; a++) {
-              nodeWeights[i][a] = Math.exp(params.emissions[i][a][x[i]]);
-            }
-          }
+        if (Main.extra_verbose) {
+          LogInfo.logs("edgeWeights = " + Fmt.D(edgeWeights));
+          LogInfo.logs("nodeWeights = " + Fmt.D(nodeWeights));
+        }
+        ForwardBackward the_model_for_each_x = new ForwardBackward(edgeWeights, nodeWeights);
+        the_model_for_each_x.infer();
 
-          if (Main.extra_verbose) {
-            LogInfo.logs("edgeWeights = " + Fmt.D(edgeWeights));
-            LogInfo.logs("nodeWeights = " + Fmt.D(nodeWeights));
-          }
-          ForwardBackward the_model_for_each_x = new ForwardBackward(
-              edgeWeights,
-              nodeWeights
-          );
-          the_model_for_each_x.infer();
-
-          double[] E_grad_phi = expectation_cap_phi(x, theta_hat, params, the_model_for_each_x);
-          double[] grad_log_Z = new double[K];
-          for(int k = 0; k < K; k++)
-            grad_log_Z[k] = gradient[k] - E_grad_phi[k];
-          new_grad = grad_log_Z;
+        Params E_grad_phi = expectation_cap_phi(x, theta_hat, params, the_model_for_each_x);
+        Params grad_log_Z = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
+        
+        // subtract
+        for (int a = 0; a < Main.rangeZ; a++)
+          for (int b = 0; b < Main.rangeZ; b++)
+            grad_log_Z.transitions[a][b] = gradient.transitions[a][b] - E_grad_phi.transitions[a][b];
+        for (int i = 0; i < L; i++)
+          for (int a = 0; a < Main.rangeZ; a++)
+            for (int c = 0; c < Main.rangeX; c++)
+              grad_log_Z.emissions[i][a][c] = gradient.emissions[i][a][c] - E_grad_phi.emissions[i][a][c];
       } else {
 //        Z = calculate_Z(x, theta_hat)
 //        if approx_inference == 1:
@@ -186,12 +167,22 @@ public class ModelAndLearning {
         eta = Main.eta0;
       }
 
-      for (int i = 0; i < K; i++) {
-        theta_hat[i] += eta * new_grad[i];
-        theta_hat_average[i] =
-            (counter - 1)/(double)counter*theta_hat_average[i] +
-            1/(double)counter*theta_hat[i];
-      }
+      for (int a = 0; a < Main.rangeZ; a++)
+        for (int b = 0; b < Main.rangeZ; b++) {
+          theta_hat.transitions[a][b] = eta * new_grad.transitions[a][b];
+          theta_hat_average.transitions[a][b] =
+              (counter - 1)/(double)counter*theta_hat_average.transitions[a][b] +
+              1/(double)counter*theta_hat.transitions[a][b];
+        }
+      for (int i = 0; i < L; i++)
+        for (int a = 0; a < Main.rangeZ; a++)
+          for (int c = 0; c < Main.rangeX; c++) {
+            theta_hat.emissions[i][a][c] = eta * new_grad.emissions[i][a][c];
+            theta_hat_average.emissions[i][a][c] =
+                (counter - 1)/(double)counter*theta_hat_average.emissions[i][a][c] +
+                1/(double)counter*theta_hat.emissions[i][a][c];
+          }
+
 
       if ((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
         double average_log_likelihood = calculate_average_log_likelihood(train_data, params);
@@ -202,7 +193,8 @@ public class ModelAndLearning {
         );
       }
       if (Main.learning_verbose) {
-        LogInfo.logs(counter + ": theta_hat_average:\t" + Arrays.toString(theta_hat_average));
+        LogInfo.logs(counter + ": theta_hat_average.emissions:\t" + Fmt.D(theta_hat_average.emissions));
+        LogInfo.logs(counter + ": theta_hat_average.transitions:\t" + Fmt.D(theta_hat_average.transitions));
       }
 
     }
@@ -247,38 +239,57 @@ public class ModelAndLearning {
     return the_sum - logZ;
   }
 
-  public double[] expectation_cap_phi(int[] x, double[] theta, Params params, ForwardBackward fwbw) {
-    double[] total = new double[K];
+  public Params expectation_cap_phi(int[] x, Params theta_hat, Params params, ForwardBackward fwbw) {
+    Params totalParams = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
     int L = x.length;
 
     if(Main.inferType == Main.EXACT) {
-      for(int k = 0; k < K; k++) {
-        double the_sum = 0.0;
-        for(int i = 0; i < L - 1; i++) {
-          double[][] edgePosteriors = new double[Main.rangeY][Main.rangeY];
-          fwbw.getEdgePosteriors(i, edgePosteriors);
-          for(int yi = 0; yi < Main.rangeY; yi++) {
-            for(int yiminus1 = 0; yiminus1 < Main.rangeY; yiminus1++) {
-              double part1 = params.emissions[i][yi][yiminus1];
-              double part2 = edgePosteriors[yi][yiminus1];
+      for(int a = 0; a < Main.rangeZ; a++) {
+        for(int b = 0; b < Main.rangeZ; b++) {
+          double the_sum = 0.0;
+          for(int i = 0; i < L - 1; i++) {
+            double[][] edgePosteriors = new double[Main.rangeY][Main.rangeY];
+            fwbw.getEdgePosteriors(i, edgePosteriors);
+            for(int zi = 0; zi < Main.rangeY; zi++) {
+              for(int ziminus1 = 0; ziminus1 < Main.rangeZ; ziminus1++) {
+                int part1 = Util.indicator(zi == a && ziminus1 == b);
+                // for an indicator function it seems like an overkill
+                // to loop over rangeZ^2, because E[I[b]] = Prob[b],
+                // but we keep this pattern for the generalization purpose.
+                double part2 = edgePosteriors[zi][ziminus1];
+                
+                if(Main.sanity_check) {
+                  NumUtils.assertIsFinite(part1);
+                  NumUtils.assertIsFinite(part2);
+                }
+                the_sum += part1 * part2;
+              }
+            }
+          }
+          totalParams.transitions[a][b] = the_sum;
+        }
+      }
+
+      for(int a = 0; a < Main.rangeZ; a++) {
+        for(int c = 0; c < Main.rangeX; c++) {
+          double the_sum = 0.0;
+          for(int i = 0; i < L - 1; i++) {
+            double[] nodePosteriors = new double[Main.rangeY];
+            fwbw.getNodePosteriors(i, nodePosteriors);
+            for(int zi = 0; zi < Main.rangeZ; zi++) {
+              int part1 = Util.indicator(zi == a && x[i] == c);
+              double part2 = nodePosteriors[zi];
               
               if(Main.sanity_check) {
                 NumUtils.assertIsFinite(part1);
                 NumUtils.assertIsFinite(part2);
               }
-              
               the_sum += part1 * part2;
             }
           }
+          totalParams.transitions[a][c] = the_sum;
         }
-        for(int i = 0; i < L; i++) {
-          double[] nodePosteriors = new double[Main.rangeY];
-          fwbw.getNodePosteriors(i, nodePosteriors);
-        }
-        total[k] = the_sum;
-        //LogInfo.logs("the_sum = " + Fmt.D(the_sum));
       }
-      //LogInfo.logs("total = " + Fmt.D(total));
     }
 //    if(approx_inference == Main.EXACT) {
 //      for(int[] z : new CartesianProduct(indicesForZ)) {
@@ -287,7 +298,7 @@ public class ModelAndLearning {
 //          total[k] += p(z, x, theta) * the_phi[k];
 //      }
 //    }
-    return total;
+    return totalParams;
   }
 
   public double difference_between_expectations(

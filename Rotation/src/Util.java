@@ -17,7 +17,7 @@ public class Util {
     return output;
   }
   
-  public int indicator(boolean bool) {
+  public static int indicator(boolean bool) {
     if (bool) {
       return 1;
     } else {
