@@ -18,8 +18,9 @@ public class ForwardBackward {
 
   // Return output
   public void getNodePosteriors(int i, double[] posteriors) {
-    for(int s = 0; s < S; s++)
+    for(int s = 0; s < S; s++) {
       posteriors[s] = inside[i][s] * outside[i][s];
+    }
     //dbg(Fmt.D(inside[i]) + " || " + Fmt.D(outside[i]) + " || " + Fmt.D(posteriors));
     NumUtils.normalize(posteriors);
   }

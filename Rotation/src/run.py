@@ -16,6 +16,8 @@ parser.add_option("--dataset", type="string", dest="dataset", default="../data/a
 parser.add_option("--iterations", type="int", dest="iterations", default=20)
 parser.add_option("--inference", type="int", dest="inference", default=0)
 parser.add_option("--fully_supervised", dest="fully_supervised", default=False)
+parser.add_option("--debug_verbose", dest="debug_verbose", default=True)
+parser.add_option("--state_verbose", dest="state_verbose", default=True)
 parser.add_option("--generate_data", default=False)
 
 (options, args) = parser.parse_args()
@@ -46,16 +48,18 @@ if options.run:
     call(shlex.split(" ".join(call_args)))
   else:
     if not options.verbose:
-      call_args.append("-log.stdout false")
+      call_args.append("-log.stdout true")
     call_args.append("-experimentName %s" % name)
     call_args.append("-model LinearChainCRF") # only have one model at the moment
     call_args.append("-dataSource %s" % options.dataset)
     call_args.append("-numIters %d" % options.iterations)
     call_args.append("-inferType %d" % options.inference)
     call_args.append("-fully_supervised %d" % options.fully_supervised)
+    call_args.append("-debug_verbose %s" % options.debug_verbose)
+    call_args.append("-state_verbose %s" % options.state_verbose)
     call_args.append("-generate_data %s" % options.generate_data)
     command_to_run = " ".join(call_args)
-    print("calling...")
+    print("command to run")
     print(command_to_run)
     run_cmd = lambda : call(shlex.split(command_to_run))
     run_cmd()

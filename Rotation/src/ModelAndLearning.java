@@ -101,7 +101,6 @@ public class ModelAndLearning {
     return data;
   }
 
-
   public double[] train(ArrayList<Example> train_data) {
     LogInfo.begin_track("train");
     Params params = new Params(Main.rangeX, Main.rangeY);
@@ -123,9 +122,13 @@ public class ModelAndLearning {
 //        Z = calculate_Z(x, theta_hat)
 //        E_grad_phi = expectation_phi(x, theta_hat, Z, approx_inference) // old version
 
+
+          double[][] nodeWeights = new double[x.length][Main.rangeX];
+          // TODO: figure out what nodeWeights should be
+          
           ForwardBackward the_model_for_each_x = new ForwardBackward(
               params.transitions,
-              params.emissions
+              nodeWeights
           );
           the_model_for_each_x.infer();
 
@@ -203,7 +206,7 @@ public class ModelAndLearning {
   
   public double real_p(int[] y, int[] x, double[] theta, double xi) {
     // TODO
-    return 0.5;
+    return 0.9;
   }
     
   public double p(int[] z, int[] x, double[] theta) {
@@ -218,23 +221,22 @@ public class ModelAndLearning {
     if(Main.inferType == Main.EXACT) {
       for(int k = 0; k < K; k++) {
         double the_sum = 0.0;
-        for(int i = 0; i < L; i++) {
-          double[][] posteriors = new double[Main.rangeY][Main.rangeY];
-          fwbw.getEdgePosteriors(i, posteriors);
+        for(int i = 0; i < L - 1; i++) {
+          double[][] edgePosteriors = new double[Main.rangeY][Main.rangeY];
+          fwbw.getEdgePosteriors(i, edgePosteriors);
           for(int yi = 0; yi < Main.rangeY; yi++) {
             for(int yiminus1 = 0; yiminus1 < Main.rangeY; yiminus1++) {
-              the_sum += params.emissions[yi][yiminus1] * posteriors[yi][yiminus1];
+              the_sum += params.emissions[yi][yiminus1] * edgePosteriors[yi][yiminus1];
             }
           }
         }
+        for(int i = 0; i < L; i++) {
+          double[] nodePosteriors = new double[Main.rangeY];
+          fwbw.getNodePosteriors(i, nodePosteriors);
+        }
         total[k] = the_sum;
-        System.out.println("the_sum = " + the_sum);
       }
     }
-//    int[] indicesForZ = new int[numY];
-//    for(int i = 0; i < numY; i++) {
-//      indicesForZ[i] = numY; //TODO: check this
-//    }
 //    if(approx_inference == Main.EXACT) {
 //      for(int[] z : new CartesianProduct(indicesForZ)) {
 //        double[] the_phi = phi(z, x);

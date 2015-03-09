@@ -140,6 +140,18 @@ public class Main implements Runnable {
         }
 
         if (debug_verbose) {
+          System.out.println("----------BEGIN:train_data----------");
+          for(Example example : train_data) {
+            System.out.println(example);
+          }
+          System.out.println("----------END:train_data----------");
+          System.out.println("----------BEGIN:test_data----------");
+          for(Example example : test_data) {
+            System.out.println(example);
+          }
+          System.out.println("----------END:test_data----------");
+
+
           System.out.println("experimentName:\t" + experimentName);
           System.out.println("model:\t" + model);
           System.out.println("eta0:\t" + eta0);
@@ -157,20 +169,6 @@ public class Main implements Runnable {
           System.out.println("rangeY:\t" + rangeY);
           System.out.println("rangeZ:\t" + rangeZ);
         }
-
-        if (debug_verbose) {
-          System.out.println("----------BEGIN:train_data----------");
-          for(Example example : train_data) {
-            System.out.println(example);
-          }
-          System.out.println("----------END:train_data----------");
-          System.out.println("----------BEGIN:test_data----------");
-          for(Example example : test_data) {
-            System.out.println(example);
-          }
-          System.out.println("----------END:test_data----------");
-        }
-
         the_model.train(train_data);
       } else {
         throw new Exception("Model not supported");
