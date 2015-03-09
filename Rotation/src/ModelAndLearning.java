@@ -9,6 +9,7 @@ import java.util.Set;
 import util.Pair;
 import edu.stanford.nlp.stats.Counter;
 import fig.basic.LogInfo;
+import fig.basic.NumUtils;
 
 public class ModelAndLearning {
   private ArrayList<Example> data;
@@ -103,7 +104,8 @@ public class ModelAndLearning {
 
   public double[] train(ArrayList<Example> train_data) {
     LogInfo.begin_track("train");
-    Params params = new Params(Main.rangeX, Main.rangeY);
+    int featureTemplateNum = Main.sentenceLength;
+    Params params = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
     K = Main.rangeY * Main.rangeY + Main.rangeY * Main.rangeX;
     // returns: learned_theta
     double[] theta_hat = new double[K];
@@ -112,8 +114,9 @@ public class ModelAndLearning {
     for (Example sample : train_data) {
       counter += 1;
       int[] y = sample.getOutput();
-      int[] z = sample.getOutput(); // different semantics
+      int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
       int[] x = sample.getInput();
+      int L = x.length;
       double[] new_grad = new double[K];
 
       if (Main.fully_supervised) {
@@ -124,8 +127,14 @@ public class ModelAndLearning {
 
 
           double[][] nodeWeights = new double[x.length][Main.rangeX];
-          // TODO: figure out what nodeWeights should be
           
+          // TODO: check that nodeWeights is correct
+          for (int i = 0; i < L; i++) {
+            for (int a = 0; a < Main.rangeZ; a++) {
+              nodeWeights[i][a] = params.emissions[i][a][x[i]];
+            }
+          }
+
           ForwardBackward the_model_for_each_x = new ForwardBackward(
               params.transitions,
               nodeWeights
@@ -157,20 +166,19 @@ public class ModelAndLearning {
 //          new_grad = difference_between_expectations(x, y, theta_hat, Z, xi, M)
       }
 
-      if(Main.gradient_descent_type == Main.DECREASING_STEP_SIZES) {
+      if (Main.gradient_descent_type == Main.DECREASING_STEP_SIZES) {
         eta = Main.eta0 * 1.00/Math.sqrt(counter);
       } else if (Main.gradient_descent_type == Main.CONSTANT_STEP_SIZES){
         eta = Main.eta0;
       }
 
-      for(int i = 0; i < K; i++) {
+      for (int i = 0; i < K; i++) {
         theta_hat[i] += eta * new_grad[i];
         theta_hat_average[i] =
             (counter - 1)/(double)counter*theta_hat_average[i] +
             1/(double)counter*theta_hat[i];
       }
-      
-      if((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
+      if ((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
         double average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat_average);
         LogInfo.logs(
             counter + 
@@ -178,7 +186,7 @@ public class ModelAndLearning {
             average_log_likelihood
         );
       }
-      if(Main.learning_verbose) {
+      if (Main.learning_verbose) {
         LogInfo.logs(counter + ": theta_hat_average:\t" + Arrays.toString(theta_hat_average));
       }
 
@@ -226,7 +234,17 @@ public class ModelAndLearning {
           fwbw.getEdgePosteriors(i, edgePosteriors);
           for(int yi = 0; yi < Main.rangeY; yi++) {
             for(int yiminus1 = 0; yiminus1 < Main.rangeY; yiminus1++) {
-              the_sum += params.emissions[yi][yiminus1] * edgePosteriors[yi][yiminus1];
+              System.out.println("params.emissions[i][yi][yiminus1] = " + params.emissions[i][yi][yiminus1]);
+              System.out.println("edgePosteriors[yi][yiminus1] = " + edgePosteriors[yi][yiminus1]);
+              double part1 = params.emissions[i][yi][yiminus1];
+              double part2 = edgePosteriors[yi][yiminus1];
+              
+              if(Main.sanity_check) {
+                NumUtils.assertIsFinite(part1);
+                NumUtils.assertIsFinite(part2);
+              }
+              
+              the_sum += part1 * part2;
             }
           }
         }
@@ -235,7 +253,9 @@ public class ModelAndLearning {
           fwbw.getNodePosteriors(i, nodePosteriors);
         }
         total[k] = the_sum;
+        System.out.println("the_sum = " + the_sum);
       }
+      System.out.println("total = " + Arrays.toString(total));
     }
 //    if(approx_inference == Main.EXACT) {
 //      for(int[] z : new CartesianProduct(indicesForZ)) {

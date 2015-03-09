@@ -113,8 +113,10 @@ public class ForwardBackward {
           }
         }
 
-        //NumUtils.assertIsFinite(A);
-        //NumUtils.assertIsFinite(B);
+        if(Main.sanity_check) {
+          NumUtils.assertIsFinite(A);
+          NumUtils.assertIsFinite(B);
+        }
         maxScore[i][s] = A*B;
       }
 
@@ -182,8 +184,8 @@ public class ForwardBackward {
           }
         }
 
-        //NumUtils.assertIsFinite(A);
-        //NumUtils.assertIsFinite(B);
+        NumUtils.assertIsFinite(A);
+        NumUtils.assertIsFinite(B);
         inside[i][s] = A*B;
       }
 
