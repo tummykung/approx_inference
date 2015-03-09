@@ -13,9 +13,23 @@ public class Params {
   ArrayList<FeatureExtractor> features;
   double xi;
   
-  public Params(int X, int Y, int featureTemplateNum) {
+  public Params(int X, int Y, int featureTemplateNum, double initial_value) {
     transitions = new double[Y][Y]; // from left to right
     emissions = new double[featureTemplateNum][Y][X];
+    
+    if (initial_value != 0) {
+      for (int a = 0; a < Y; a++)
+        for (int b = 0; b < Y; b++)
+          transitions[a][b] = initial_value;
+          
+      for (int i = 0; i < featureTemplateNum; i++)
+        for (int a = 0; a < Y; a++)
+          for (int c = 0; c < X; c++)
+            emissions[i][a][c] = initial_value;
+    }
+  }
+  public Params(int X, int Y, int featureTemplateNum) {
+    this(X, Y, featureTemplateNum, 0);
   }
   
   public void print(String name) {

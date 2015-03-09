@@ -11,6 +11,7 @@ import edu.stanford.nlp.stats.Counter;
 import fig.basic.Fmt;
 import fig.basic.LogInfo;
 import fig.basic.NumUtils;
+import fig.prob.SampleUtils;
 
 public class ModelAndLearning {
   private ArrayList<Example> data;
@@ -92,21 +93,26 @@ public class ModelAndLearning {
     LogInfo.begin_track("train");
     int featureTemplateNum = Main.sentenceLength;
     K = Main.rangeY * Main.rangeY + Main.rangeY * Main.rangeX;
+    double delta = 10e-4;
     // returns: learned_theta
-    Params theta_hat = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
-    Params theta_hat_average = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
+    Params theta_hat = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
+    Params theta_hat_average = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
+    Params st = new Params(Main.rangeX, Main.rangeY, featureTemplateNum, delta); // for AdaGrad
     int counter = 0;
-    for (Example sample : train_data) {
-      counter += 1;
+    int[] permuted_order = SampleUtils.samplePermutation(this.randomizer, train_data.size());
+    
+    for (int exampleCounter = 0; exampleCounter < train_data.size(); exampleCounter++) {
+      Example sample = train_data.get(permuted_order[exampleCounter]);
+      counter = exampleCounter + 1;
       int[] y = sample.getOutput();
       int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
       int[] x = sample.getInput();
       int L = x.length;
-      Params new_grad = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
+      Params new_grad = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
 
       if (Main.fully_supervised) {
         //initialize
-        Params gradient = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
+        Params gradient = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
         for(int i = 0; i < L; i++) {
           if (i < L - 1)
             gradient.transitions[z[i]][z[i + 1]] += 1;
@@ -161,13 +167,12 @@ public class ModelAndLearning {
       }
 
       if (Main.gradient_descent_type == Main.DECREASING_STEP_SIZES) {
-        eta = Main.eta0 * 1.00/Math.sqrt(counter);
+        eta = Main.eta0/Math.sqrt(counter);
       } else if (Main.gradient_descent_type == Main.CONSTANT_STEP_SIZES){
         eta = Main.eta0;
-      } else if (Main.gradient_descent_type == Main.ADAGRAD){
-        eta = Main.eta0 * 1.00/Math.sqrt(counter);
       }
- 
+      // if adagrad we'll do at the level of update itself
+
       if (Main.extra_verbose) {
         System.out.println("=====BEGIN DEBUG ZONE=====");
         new_grad.print("new_grad");
@@ -178,7 +183,11 @@ public class ModelAndLearning {
 
       for (int a = 0; a < Main.rangeZ; a++)
         for (int b = 0; b < Main.rangeZ; b++) {
-          theta_hat.transitions[a][b] = eta * new_grad.transitions[a][b];
+          if (Main.gradient_descent_type == Main.ADAGRAD){
+            theta_hat.transitions[a][b] = Main.eta0/Math.sqrt(st.transitions[a][b]) * new_grad.transitions[a][b];
+            st.transitions[a][b] += new_grad.transitions[a][b] * new_grad.transitions[a][b];
+          } else
+            theta_hat.transitions[a][b] = eta * new_grad.transitions[a][b];
           theta_hat_average.transitions[a][b] =
               (counter - 1)/(double)counter*theta_hat_average.transitions[a][b] +
               1/(double)counter*theta_hat.transitions[a][b];
@@ -186,7 +195,11 @@ public class ModelAndLearning {
       for (int i = 0; i < L; i++)
         for (int a = 0; a < Main.rangeZ; a++)
           for (int c = 0; c < Main.rangeX; c++) {
-            theta_hat.emissions[i][a][c] = eta * new_grad.emissions[i][a][c];
+            if (Main.gradient_descent_type == Main.ADAGRAD){
+              theta_hat.emissions[i][a][c] = Main.eta0/Math.sqrt(st.emissions[i][a][c]) * new_grad.emissions[i][a][c];
+              st.emissions[i][a][c] += new_grad.emissions[i][a][c] * new_grad.emissions[i][a][c];
+            } else
+              theta_hat.emissions[i][a][c] = eta * new_grad.emissions[i][a][c];
             theta_hat_average.emissions[i][a][c] =
                 (counter - 1)/(double)counter*theta_hat_average.emissions[i][a][c] +
                 1/(double)counter*theta_hat.emissions[i][a][c];
