@@ -73,11 +73,14 @@ public class Main implements Runnable {
     @Option(required=false)
     public static boolean debug_verbose = true;
     @Option(required=false)
+    public static boolean extra_verbose = false;
+    @Option(required=false)
     public static boolean log_likelihood_verbose = true;
     @Option(required=false)
     public static boolean prediction_verbose = false;
     @Option(required=false)
     public static boolean sanity_check = false;
+    
 
     // for data generating
     @Option(required=false)

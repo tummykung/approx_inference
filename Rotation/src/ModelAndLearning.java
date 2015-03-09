@@ -8,6 +8,7 @@ import java.util.Set;
 
 import util.Pair;
 import edu.stanford.nlp.stats.Counter;
+import fig.basic.Fmt;
 import fig.basic.LogInfo;
 import fig.basic.NumUtils;
 
@@ -50,6 +51,7 @@ public class ModelAndLearning {
     // and n is the num sample iterator
     // TODO:  generate x from a uniform distribution and sample y.
 
+    LogInfo.begin_track("generate_data");
     data = new ArrayList<Example>();
     // int[num_samples][2][sentenceLength];
     // given parameters, generate data according to a log-linear model
@@ -99,6 +101,7 @@ public class ModelAndLearning {
         System.out.println("data: " + data);
       }
     }
+    LogInfo.end_track("generate_data");
     return data;
   }
 
@@ -126,17 +129,28 @@ public class ModelAndLearning {
 //        E_grad_phi = expectation_phi(x, theta_hat, Z, approx_inference) // old version
 
 
-          double[][] nodeWeights = new double[x.length][Main.rangeX];
+          double[][] nodeWeights = new double[x.length][Main.rangeZ];
+          double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
           
-          // TODO: check that nodeWeights is correct
-          for (int i = 0; i < L; i++) {
-            for (int a = 0; a < Main.rangeZ; a++) {
-              nodeWeights[i][a] = params.emissions[i][a][x[i]];
+          // TODO: check that edgeWeights is correct
+          for (int a = 0; a < Main.rangeZ; a++) {
+            for (int b = 0; b < Main.rangeZ; b++) {
+              edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
             }
           }
 
+          for (int i = 0; i < L; i++) {
+            for (int a = 0; a < Main.rangeZ; a++) {
+              nodeWeights[i][a] = Math.exp(params.emissions[i][a][x[i]]);
+            }
+          }
+
+          if (Main.extra_verbose) {
+            LogInfo.logs("edgeWeights = " + Fmt.D(edgeWeights));
+            LogInfo.logs("nodeWeights = " + Fmt.D(nodeWeights));
+          }
           ForwardBackward the_model_for_each_x = new ForwardBackward(
-              params.transitions,
+              edgeWeights,
               nodeWeights
           );
           the_model_for_each_x.infer();
@@ -178,12 +192,13 @@ public class ModelAndLearning {
             (counter - 1)/(double)counter*theta_hat_average[i] +
             1/(double)counter*theta_hat[i];
       }
+
       if ((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
-        double average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat_average);
+        double average_log_likelihood = calculate_average_log_likelihood(train_data, params);
         LogInfo.logs(
             counter + 
             ": train dataset average log-likelihood:\t" +
-            average_log_likelihood
+            Fmt.D(average_log_likelihood)
         );
       }
       if (Main.learning_verbose) {
@@ -195,7 +210,7 @@ public class ModelAndLearning {
     return theta_hat_average;
   }
   
-  public double calculate_average_log_likelihood(ArrayList<Example> train_data, double theta[]) {
+  public double calculate_average_log_likelihood(ArrayList<Example> train_data, Params params) {
     double total_log_likelihood = 0.0;
     int count = 0;
     for (Example sample : train_data) {
@@ -203,23 +218,33 @@ public class ModelAndLearning {
       int[] y = (int[]) sample.getOutput();
       int[] z = (int[]) sample.getOutput(); // different semantics
       int[] x = (int[]) sample.getInput();
+     
+      // TODO: correctly compute logZ from ForwardBackward
+      double logZ = 0;
+      
       if(Main.fully_supervised) {
-        total_log_likelihood += Math.log(p(z, x, theta));
+        total_log_likelihood += logP(z, x, params, logZ);
       } else {
-        total_log_likelihood += Math.log(real_p(y, x, theta, Main.xi));
+        total_log_likelihood += logIndirectP(y, x, params, Main.xi);
       }
     }
     return total_log_likelihood/(double)count;
   }
   
-  public double real_p(int[] y, int[] x, double[] theta, double xi) {
+  public double logIndirectP(int[] y, int[] x, Params params, double xi) {
     // TODO
     return 0.9;
   }
     
-  public double p(int[] z, int[] x, double[] theta) {
-    // TODO
-    return 1;
+  public double logP(int[] z, int[] x, Params params, double logZ) {
+    double the_sum = 0.0;
+    for(int i = 0; i < z.length; i++) {
+      if(i < z.length - 1) {
+        the_sum += params.transitions[z[i]][z[i + 1]];
+      }
+      the_sum += params.emissions[i][z[i]][x[i]];
+    }
+    return the_sum - logZ;
   }
 
   public double[] expectation_cap_phi(int[] x, double[] theta, Params params, ForwardBackward fwbw) {
@@ -234,8 +259,6 @@ public class ModelAndLearning {
           fwbw.getEdgePosteriors(i, edgePosteriors);
           for(int yi = 0; yi < Main.rangeY; yi++) {
             for(int yiminus1 = 0; yiminus1 < Main.rangeY; yiminus1++) {
-              System.out.println("params.emissions[i][yi][yiminus1] = " + params.emissions[i][yi][yiminus1]);
-              System.out.println("edgePosteriors[yi][yiminus1] = " + edgePosteriors[yi][yiminus1]);
               double part1 = params.emissions[i][yi][yiminus1];
               double part2 = edgePosteriors[yi][yiminus1];
               
@@ -253,9 +276,9 @@ public class ModelAndLearning {
           fwbw.getNodePosteriors(i, nodePosteriors);
         }
         total[k] = the_sum;
-        System.out.println("the_sum = " + the_sum);
+        //LogInfo.logs("the_sum = " + Fmt.D(the_sum));
       }
-      System.out.println("total = " + Arrays.toString(total));
+      //LogInfo.logs("total = " + Fmt.D(total));
     }
 //    if(approx_inference == Main.EXACT) {
 //      for(int[] z : new CartesianProduct(indicesForZ)) {

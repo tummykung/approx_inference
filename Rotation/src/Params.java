@@ -11,7 +11,7 @@ public class Params {
   double xi;
   
   public Params(int X, int Y, int featureTemplateNum) {
-    transitions = new double[Y][Y];
+    transitions = new double[Y][Y]; // from left to right
     emissions = new double[featureTemplateNum][Y][X];
   }
 }
