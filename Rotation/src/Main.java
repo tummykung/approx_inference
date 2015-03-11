@@ -87,7 +87,7 @@ public class Main implements Runnable {
     @Option(required=false)
     public static int num_samples = 400;
     @Option(required=false)
-    public static int sentenceLength = 5;
+    public static int sentenceLength;
     @Option(required=false)
     public static int rangeX = 5;
     @Option(required=false)

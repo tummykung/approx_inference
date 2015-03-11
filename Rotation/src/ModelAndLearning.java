@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import util.CartesianProduct;
 import util.Pair;
 import edu.stanford.nlp.stats.Counter;
 import fig.basic.Fmt;
@@ -91,6 +92,9 @@ public class ModelAndLearning {
 
   public Params train(ArrayList<Example> train_data) {
     LogInfo.begin_track("train");
+    Main.sentenceLength = train_data.get(0).getInput().length;
+    // for now, assume all sentences are of 
+    // the same length. TODO: generalize this.
     int featureTemplateNum = Main.sentenceLength;
     K = Main.rangeY * Main.rangeY + Main.rangeY * Main.rangeX;
     double delta = 10e-4;
@@ -121,10 +125,9 @@ public class ModelAndLearning {
         if (Main.extra_verbose) {
           LogInfo.logs("x = " + Arrays.toString(x));
           LogInfo.logs("z = " + Arrays.toString(z));
-          positive_gradient.print("gradient");
+          positive_gradient.print("positive_gradient");
         }
 
-        // TODO: check that edgeWeights is correct
         double[][] nodeWeights = new double[x.length][Main.rangeZ];
         double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
         for (int a = 0; a < Main.rangeZ; a++)
@@ -137,6 +140,7 @@ public class ModelAndLearning {
         the_model_for_each_x.infer();
 
         Params E_cap_phi = expectation_cap_phi(x, theta_hat, the_model_for_each_x);
+
         if (Main.extra_verbose) {
           E_cap_phi.print("E_cap_phi");
         }
@@ -291,11 +295,6 @@ public class ModelAndLearning {
                 // to loop over rangeZ^2, because E[I[b]] = Prob[b],
                 // but we keep this pattern for the generalization purpose.
                 double part2 = edgePosteriors[zi][ziminus1];
-                
-                if(Main.sanity_check) {
-                  NumUtils.assertIsFinite(part1);
-                  NumUtils.assertIsFinite(part2);
-                }
                 the_sum += part1 * part2;
               }
             }
@@ -307,21 +306,16 @@ public class ModelAndLearning {
       for(int a = 0; a < Main.rangeZ; a++) {
         for(int c = 0; c < Main.rangeX; c++) {
           double the_sum = 0.0;
+          double[] nodePosteriors = new double[Main.rangeY];
           for(int i = 0; i < L - 1; i++) {
-            double[] nodePosteriors = new double[Main.rangeY];
             fwbw.getNodePosteriors(i, nodePosteriors);
             for(int zi = 0; zi < Main.rangeZ; zi++) {
               int part1 = Util.indicator(zi == a && x[i] == c);
               double part2 = nodePosteriors[zi];
-              
-              if(Main.sanity_check) {
-                NumUtils.assertIsFinite(part1);
-                NumUtils.assertIsFinite(part2);
-              }
               the_sum += part1 * part2;
             }
-            totalParams.emissions[a][c] = the_sum;
           }
+          totalParams.emissions[a][c] = the_sum;
         }
       }
     }
