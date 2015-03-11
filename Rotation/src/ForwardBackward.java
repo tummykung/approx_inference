@@ -71,7 +71,7 @@ public class ForwardBackward {
     double[] probs = new double[S];
     for(int i = 0; i < N; i++) { // For each position i...
       for(int s = 0; s < S; s++) { // For each possible state s... 
-    	probs[s] = (i == 0 || edgeWeights == null ? 1 : edgeWeights[seq[i-1]][s]) * inside[i][s];
+          probs[s] = (i == 0 || edgeWeights == null ? 1 : edgeWeights[seq[i-1]][s]) * inside[i][s];
       }
       NumUtils.normalize(probs);
       seq[i] = SampleUtils.sampleMultinomial(random, probs);

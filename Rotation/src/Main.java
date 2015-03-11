@@ -56,7 +56,7 @@ public class Main implements Runnable {
     @Option(required=false)
     public static String model = "LinearChainCRF";
     @Option(required=false)
-    public static double eta0 = 0.01; // gradient descent initial step size
+    public static double eta0 = 0.3; // gradient descent initial step size
     @Option(required=false)
     public static int gradient_descent_type = ADAGRAD;
     @Option(required=false)
@@ -133,7 +133,7 @@ public class Main implements Runnable {
         } else {
           ArrayList<Example> data = the_model.generate_data();
           double percent_trained = 0.80;
-          int num_trained = (int)(percent_trained * data.size());
+          int num_trained = (int) Math.round(percent_trained * data.size());
           for(int i = 0; i < data.size(); i++) {
             if(i < num_trained) {
               train_data.add(data.get(i));

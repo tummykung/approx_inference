@@ -108,20 +108,20 @@ public class ModelAndLearning {
       int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
       int[] x = sample.getInput();
       int L = x.length;
-      Params new_grad = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
+      Params gradient = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
 
       if (Main.fully_supervised) {
         //initialize
-        Params gradient = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
+        Params positive_gradient = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
         for(int i = 0; i < L; i++) {
           if (i < L - 1)
-            gradient.transitions[z[i]][z[i + 1]] += 1;
-          gradient.emissions[i][z[i]][x[i]] += 1;
+            positive_gradient.transitions[z[i]][z[i + 1]] += 1;
+          positive_gradient.emissions[z[i]][x[i]] += 1;
         }
         if (Main.extra_verbose) {
           LogInfo.logs("x = " + Arrays.toString(x));
           LogInfo.logs("z = " + Arrays.toString(z));
-          gradient.print("gradient");
+          positive_gradient.print("gradient");
         }
 
         // TODO: check that edgeWeights is correct
@@ -132,20 +132,21 @@ public class ModelAndLearning {
             edgeWeights[a][b] = Math.exp(theta_hat.transitions[a][b]);
         for (int i = 0; i < L; i++)
           for (int a = 0; a < Main.rangeZ; a++)
-            nodeWeights[i][a] = Math.exp(theta_hat.emissions[i][a][x[i]]);
+            nodeWeights[i][a] = Math.exp(theta_hat.emissions[a][x[i]]);
         ForwardBackward the_model_for_each_x = new ForwardBackward(edgeWeights, nodeWeights);
         the_model_for_each_x.infer();
 
-        Params E_grad_phi = expectation_cap_phi(x, theta_hat, the_model_for_each_x);
-
+        Params E_cap_phi = expectation_cap_phi(x, theta_hat, the_model_for_each_x);
+        if (Main.extra_verbose) {
+          E_cap_phi.print("E_cap_phi");
+        }
         // subtract
         for (int a = 0; a < Main.rangeZ; a++)
           for (int b = 0; b < Main.rangeZ; b++)
-            new_grad.transitions[a][b] = gradient.transitions[a][b] - E_grad_phi.transitions[a][b];
-        for (int i = 0; i < L; i++)
-          for (int a = 0; a < Main.rangeZ; a++)
-            for (int c = 0; c < Main.rangeX; c++)
-              new_grad.emissions[i][a][c] = gradient.emissions[i][a][c] - E_grad_phi.emissions[i][a][c];
+            gradient.transitions[a][b] = positive_gradient.transitions[a][b] - E_cap_phi.transitions[a][b];
+        for (int a = 0; a < Main.rangeZ; a++)
+          for (int c = 0; c < Main.rangeX; c++)
+            gradient.emissions[a][c] = positive_gradient.emissions[a][c] - E_cap_phi.emissions[a][c];
       } else {
 //        Z = calculate_Z(x, theta_hat)
 //        if approx_inference == 1:
@@ -175,7 +176,7 @@ public class ModelAndLearning {
 
       if (Main.extra_verbose) {
         System.out.println("=====BEGIN DEBUG ZONE=====");
-        new_grad.print("new_grad");
+        gradient.print("gradient");
         theta_hat.print("theta_hat");
         theta_hat_average.print("theta_hat_average");
         System.out.println("=====END DEBUG ZONE=====");
@@ -184,26 +185,25 @@ public class ModelAndLearning {
       for (int a = 0; a < Main.rangeZ; a++)
         for (int b = 0; b < Main.rangeZ; b++) {
           if (Main.gradient_descent_type == Main.ADAGRAD){
-            theta_hat.transitions[a][b] = Main.eta0/Math.sqrt(st.transitions[a][b]) * new_grad.transitions[a][b];
-            st.transitions[a][b] += new_grad.transitions[a][b] * new_grad.transitions[a][b];
+            theta_hat.transitions[a][b] = Main.eta0/Math.sqrt(st.transitions[a][b]) * gradient.transitions[a][b];
+            st.transitions[a][b] += gradient.transitions[a][b] * gradient.transitions[a][b];
           } else
-            theta_hat.transitions[a][b] = eta * new_grad.transitions[a][b];
+            theta_hat.transitions[a][b] = eta * gradient.transitions[a][b];
           theta_hat_average.transitions[a][b] =
               (counter - 1)/(double)counter*theta_hat_average.transitions[a][b] +
               1/(double)counter*theta_hat.transitions[a][b];
         }
-      for (int i = 0; i < L; i++)
-        for (int a = 0; a < Main.rangeZ; a++)
-          for (int c = 0; c < Main.rangeX; c++) {
-            if (Main.gradient_descent_type == Main.ADAGRAD){
-              theta_hat.emissions[i][a][c] = Main.eta0/Math.sqrt(st.emissions[i][a][c]) * new_grad.emissions[i][a][c];
-              st.emissions[i][a][c] += new_grad.emissions[i][a][c] * new_grad.emissions[i][a][c];
-            } else
-              theta_hat.emissions[i][a][c] = eta * new_grad.emissions[i][a][c];
-            theta_hat_average.emissions[i][a][c] =
-                (counter - 1)/(double)counter*theta_hat_average.emissions[i][a][c] +
-                1/(double)counter*theta_hat.emissions[i][a][c];
-          }
+      for (int a = 0; a < Main.rangeZ; a++)
+        for (int c = 0; c < Main.rangeX; c++) {
+          if (Main.gradient_descent_type == Main.ADAGRAD){
+            theta_hat.emissions[a][c] = Main.eta0/Math.sqrt(st.emissions[a][c]) * gradient.emissions[a][c];
+            st.emissions[a][c] += gradient.emissions[a][c] * gradient.emissions[a][c];
+          } else
+            theta_hat.emissions[a][c] = eta * gradient.emissions[a][c];
+          theta_hat_average.emissions[a][c] =
+              (counter - 1)/(double)counter*theta_hat_average.emissions[a][c] +
+              1/(double)counter*theta_hat.emissions[a][c];
+        }
 
 
       if ((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
@@ -241,7 +241,7 @@ public class ModelAndLearning {
           edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
       for (int i = 0; i < x.length; i++)
         for (int a = 0; a < Main.rangeZ; a++)
-          nodeWeights[i][a] = Math.exp(params.emissions[i][a][x[i]]);
+          nodeWeights[i][a] = Math.exp(params.emissions[a][x[i]]);
       ForwardBackward the_model_for_each_x = new ForwardBackward(edgeWeights, nodeWeights);
       the_model_for_each_x.infer();
       double logZ = the_model_for_each_x.getLogZ();
@@ -266,7 +266,7 @@ public class ModelAndLearning {
       if(i < z.length - 1) {
         the_sum += params.transitions[z[i]][z[i + 1]];
       }
-      the_sum += params.emissions[i][z[i]][x[i]];
+      the_sum += params.emissions[z[i]][x[i]];
     }
     double to_return = the_sum - logZ;
     assert to_return < 0;
@@ -320,8 +320,8 @@ public class ModelAndLearning {
               }
               the_sum += part1 * part2;
             }
+            totalParams.emissions[a][c] = the_sum;
           }
-          totalParams.transitions[a][c] = the_sum;
         }
       }
     }
