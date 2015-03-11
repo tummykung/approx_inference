@@ -178,10 +178,10 @@ public class ModelAndLearning {
       for (int a = 0; a < Main.rangeZ; a++)
         for (int b = 0; b < Main.rangeZ; b++) {
           if (Main.gradient_descent_type == Main.ADAGRAD){
-            theta_hat.transitions[a][b] = Main.eta0/Math.sqrt(st.transitions[a][b]) * gradient.transitions[a][b];
             st.transitions[a][b] += gradient.transitions[a][b] * gradient.transitions[a][b];
+            theta_hat.transitions[a][b] += Main.eta0/Math.sqrt(st.transitions[a][b]) * gradient.transitions[a][b];
           } else
-            theta_hat.transitions[a][b] = eta * gradient.transitions[a][b];
+            theta_hat.transitions[a][b] += eta * gradient.transitions[a][b];
           theta_hat_average.transitions[a][b] =
               (counter - 1)/(double)counter*theta_hat_average.transitions[a][b] +
               1/(double)counter*theta_hat.transitions[a][b];
@@ -189,10 +189,10 @@ public class ModelAndLearning {
       for (int a = 0; a < Main.rangeZ; a++)
         for (int c = 0; c < Main.rangeX; c++) {
           if (Main.gradient_descent_type == Main.ADAGRAD){
-            theta_hat.emissions[a][c] = Main.eta0/Math.sqrt(st.emissions[a][c]) * gradient.emissions[a][c];
             st.emissions[a][c] += gradient.emissions[a][c] * gradient.emissions[a][c];
+            theta_hat.emissions[a][c] += Main.eta0/Math.sqrt(st.emissions[a][c]) * gradient.emissions[a][c];
           } else
-            theta_hat.emissions[a][c] = eta * gradient.emissions[a][c];
+            theta_hat.emissions[a][c] += eta * gradient.emissions[a][c];
           theta_hat_average.emissions[a][c] =
               (counter - 1)/(double)counter*theta_hat_average.emissions[a][c] +
               1/(double)counter*theta_hat.emissions[a][c];
