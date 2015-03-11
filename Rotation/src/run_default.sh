@@ -5,6 +5,7 @@ echo "See state/exects/default/ for results"
 # ./run.py --run --name default -seed 1234567 --Main.inferType 0 -debug_verbose -fully_supervised
 # --generate_data true --num_samples 2000 --datasource data/a.txt --debug_verbose false
 # --state_verbose false --sanity_check true --learning_verbose false
+set -x # set verbose
 java -Xmx5g -cp .:lib/fig.jar:lib/stanford-corenlp-3.5.1.jar:classes/default Main\
  -seed 1234567\
  -execPoolDir state/execs/default\
@@ -18,4 +19,6 @@ java -Xmx5g -cp .:lib/fig.jar:lib/stanford-corenlp-3.5.1.jar:classes/default Mai
  -debug_verbose False\
  -state_verbose False\
  -generate_data True\
- -num_samples 2000
+ -num_samples 2000\
+ -fully_supervised True
+ set +x # unset verbose

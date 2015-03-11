@@ -1,17 +1,8 @@
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
-
-import util.CartesianProduct;
-import util.Pair;
-import edu.stanford.nlp.stats.Counter;
 import fig.basic.Fmt;
 import fig.basic.LogInfo;
-import fig.basic.NumUtils;
 import fig.prob.SampleUtils;
 
 public class ModelAndLearning {
@@ -22,7 +13,6 @@ public class ModelAndLearning {
   // 0 = constant step size
   // 1 = decreasing step size
  
-  private int K; // the number of features
   private double eta; // stepsize
 
   public ModelAndLearning() {
@@ -96,7 +86,6 @@ public class ModelAndLearning {
     // for now, assume all sentences are of 
     // the same length. TODO: generalize this.
     int featureTemplateNum = Main.sentenceLength;
-    K = Main.rangeY * Main.rangeY + Main.rangeY * Main.rangeX;
     double delta = 10e-4;
     // returns: learned_theta
     Params theta_hat = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
@@ -108,7 +97,7 @@ public class ModelAndLearning {
     for (int exampleCounter = 0; exampleCounter < train_data.size(); exampleCounter++) {
       Example sample = train_data.get(permuted_order[exampleCounter]);
       counter = exampleCounter + 1;
-      int[] y = sample.getOutput();
+//      int[] y = sample.getOutput();
       int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
       int[] x = sample.getInput();
       int L = x.length;
@@ -236,8 +225,7 @@ public class ModelAndLearning {
       int[] y = (int[]) sample.getOutput();
       int[] z = (int[]) sample.getOutput(); // different semantics
       int[] x = (int[]) sample.getInput();
-     
-   // TODO: check that edgeWeights is correct
+
       double[][] nodeWeights = new double[x.length][Main.rangeZ];
       double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
       for (int a = 0; a < Main.rangeZ; a++)
@@ -253,7 +241,7 @@ public class ModelAndLearning {
       if(Main.fully_supervised) {
         total_log_likelihood += logP(z, x, params, logZ);
       } else {
-        total_log_likelihood += logIndirectP(y, x, params, Main.xi);
+        //total_log_likelihood += logIndirectP(y, x, params, Main.xi);
       }
     }
     return total_log_likelihood/(double)count;
