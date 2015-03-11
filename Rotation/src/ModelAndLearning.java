@@ -266,7 +266,7 @@ public class ModelAndLearning {
   }
 
   public Params expectation_cap_phi(int[] x, Params params, ForwardBackward fwbw) {
-    Params totalParams = new Params(Main.rangeX, Main.rangeY, Main.sentenceLength);
+    Params totalParams = new Params(Main.rangeX, Main.rangeZ, Main.sentenceLength);
     int L = x.length;
 
     if(Main.inferType == Main.EXACT) {
@@ -274,9 +274,9 @@ public class ModelAndLearning {
         for(int b = 0; b < Main.rangeZ; b++) {
           double the_sum = 0.0;
           for(int i = 0; i < L - 1; i++) {
-            double[][] edgePosteriors = new double[Main.rangeY][Main.rangeY];
+            double[][] edgePosteriors = new double[Main.rangeZ][Main.rangeZ];
             fwbw.getEdgePosteriors(i, edgePosteriors);
-            for(int zi = 0; zi < Main.rangeY; zi++) {
+            for(int zi = 0; zi < Main.rangeZ; zi++) {
               for(int ziminus1 = 0; ziminus1 < Main.rangeZ; ziminus1++) {
                 int part1 = Util.indicator(zi == a && ziminus1 == b);
                 // for an indicator function it seems like an overkill
@@ -294,7 +294,7 @@ public class ModelAndLearning {
       for(int a = 0; a < Main.rangeZ; a++) {
         for(int c = 0; c < Main.rangeX; c++) {
           double the_sum = 0.0;
-          double[] nodePosteriors = new double[Main.rangeY];
+          double[] nodePosteriors = new double[Main.rangeZ];
           for(int i = 0; i < L - 1; i++) {
             fwbw.getNodePosteriors(i, nodePosteriors);
             for(int zi = 0; zi < Main.rangeZ; zi++) {
