@@ -28,71 +28,45 @@ public class Main implements Runnable {
         DECREASING_STEP_SIZES = 1,
         ADAGRAD = 2;
 
-    @Option(required=true)
-    public static long inferType;
-    //  Inference Type
-    //  ==============
-    //  0 = Exact
-    //  1 = Approximate inference by
-    //    - only sampling the model expectation
-    //  2 = Importance sampling by
-    //    - sampling the model expectation, using the importance weight
-    //      to correct target sampling. However, still use exact inference
-    //      to compute the importance weight.
-    //  3 = Normalized importance sampling by
-    //    - using the model weight as the proposal distribution
-    @Option(required=true)
-    public static boolean fullySupervised; // can switch to fully supervised for sanity check
+    /** Inference Type
+     * 0 =  Exact
+     * 1 =  Approximate inference by only sampling the model expectation
+     * 2 =  Importance sampling by sampling the model expectation, using the importance weight 
+     *      to correct target sampling. However, still use exact inference
+     *      to compute the importance weight.
+     * 3 = Normalized importance sampling by using the model weight as the proposal distribution
+     */
+    @Option(required=true) public static long inferType;
+    @Option(required=true) public static boolean fullySupervised;
 
     // (optional) flag for generating data
-    @Option(required=false)
-    public static boolean generateData;
-    @Option(required=false)
-    public static String datasource = ""; // a path to data-set source
+    @Option(required=false) public static boolean generateData;
+    @Option(required=false) public static String datasource = ""; // a path to data-set source
 
     // (optional) model parameters
-    @Option(required=false)
-    public static String experimentName = "SCRATCH";
-    @Option(required=false)
-    public static String model = "LinearChainCRF";
-    @Option(required=false)
-    public static double eta0 = 0.3; // gradient descent initial step size
-    @Option(required=false)
-    public static int gradientDescentType = ADAGRAD;
-    @Option(required=false)
-    public static long numiters = 10; // the number of samples in approximate inference
-    @Option(required=false)
-    public static double xi = 10.0; // the number of samples in approximate inference
-    @Option(required=false)
-    public static long seed = 12345671;
+    @Option(required=false) public static String experimentName = "SCRATCH";
+    @Option(required=false) public static String model = "LinearChainCRF";
+    @Option(required=false) public static double eta0 = 0.3; // gradient descent initial step size
+    @Option(required=false) public static int gradientDescentType = ADAGRAD;
+    @Option(required=false) public static long numiters = 10; // the number of samples in approximate inference
+    @Option(required=false) public static double xi = 10.0; // the number of samples in approximate inference
+    @Option(required=false) public static long seed = 12345671;
 
     // (optional) flags
-    @Option(required=false)
-    public static boolean learningVerbose = false;
-    @Option(required=false)
-    public static boolean stateVerbose = true;
-    @Option(required=false)
-    public static boolean debugVerbose = true;
-    @Option(required=false)
-    public static boolean extraVerbose = false;
-    @Option(required=false)
-    public static boolean logLikelihoodVerbose = true;
-    @Option(required=false)
-    public static boolean predictionVerbose = false;
-    @Option(required=false)
-    public static boolean sanityCheck = false;
+    @Option(required=false) public static boolean learningVerbose = false;
+    @Option(required=false) public static boolean stateVerbose = true;
+    @Option(required=false) public static boolean debugVerbose = true;
+    @Option(required=false) public static boolean extraVerbose = false;
+    @Option(required=false) public static boolean logLikelihoodVerbose = true;
+    @Option(required=false) public static boolean predictionVerbose = false;
+    @Option(required=false) public static boolean sanityCheck = false;
 
     // for data generating
-    @Option(required=false)
-    public static int numSamples = 400;
-    @Option(required=false)
-    public static int sentenceLength;
-    @Option(required=false)
-    public static int rangeX = 5;
-    @Option(required=false)
-    public static int rangeY = 5;
-    @Option(required=false)
-    public static int rangeZ = 5;
+    @Option(required=false) public static int numSamples = 400;
+    @Option(required=false) public static int sentenceLength;
+    @Option(required=false) public static int rangeX = 5;
+    @Option(required=false) public static int rangeY = 5;
+    @Option(required=false) public static int rangeZ = 5;
 
     public static void main(String[] args) throws Exception {
       OptionsParser parser = new OptionsParser();

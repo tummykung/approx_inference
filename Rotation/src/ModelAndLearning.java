@@ -47,7 +47,7 @@ public class ModelAndLearning {
        for (int b = 0; b <= Main.rangeZ; b++)
        {
          if(a == b) {
-           params.transitions[a][b] = 10;
+           params.transitions[a][b] = 15;
          } else if (Math.abs(a - b) <= 1) {
            params.transitions[a][b] = 5;
          } else {
@@ -201,7 +201,7 @@ public class ModelAndLearning {
         double averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHat);
         LogInfo.logs(
             counter + 
-            ": train dataset average log-likelihood:\t" +
+            ": trainDatasetAverageLogLikelihood:\t" +
             Fmt.D(averageLogLikelihood)
         );
       }
@@ -257,7 +257,7 @@ public class ModelAndLearning {
     return modelForX.getViterbi();
   }
   public Report test(ArrayList<Example> testData, Params params) {
-    int totalOK = 0;
+    int totalExactMatch = 0;
     int totalUnaryMatch = 0;
     int totalPossibleUnaryMatch = 0;
 
@@ -268,7 +268,8 @@ public class ModelAndLearning {
       boolean exactMatch = true;
       if (x.length != predictedZ.length)
         exactMatch = false;
-      for(int i = 0; i < x.length; i++) {
+      int minLenth = Math.min(x.length, z.length);
+      for(int i = 0; i < minLenth; i++) {
         if(x[i] == predictedZ[i]) {
           totalUnaryMatch += 1;
         } else
@@ -276,10 +277,10 @@ public class ModelAndLearning {
         totalPossibleUnaryMatch += 1;
       }
       if (exactMatch)
-        totalOK += 1;
+        totalExactMatch += 1;
     }
     return new Report(
-        totalOK,
+        totalExactMatch,
         testData.size(),
         totalUnaryMatch,
         totalPossibleUnaryMatch,
