@@ -48,9 +48,10 @@ public class Main implements Runnable {
     @Option(required=false) public static String model = "LinearChainCRF";
     @Option(required=false) public static double eta0 = 0.3; // gradient descent initial step size
     @Option(required=false) public static int gradientDescentType = ADAGRAD;
-    @Option(required=false) public static long numiters = 10; // the number of samples in approximate inference
+    @Option(required=false) public static long numIters = 10; // the number of samples in approximate inference
     @Option(required=false) public static double xi = 10.0; // the number of samples in approximate inference
     @Option(required=false) public static long seed = 12345671;
+    @Option(required=false) public static boolean usingAveragingMethod = true;
 
     // (optional) flags
     @Option(required=false) public static boolean learningVerbose = false;
@@ -136,7 +137,7 @@ public class Main implements Runnable {
           System.out.println("model:\t" + model);
           System.out.println("eta0:\t" + eta0);
           System.out.println("gradientDescentType:\t" + gradientDescentType);
-          System.out.println("numiters:\t" + numiters);
+          System.out.println("numIters:\t" + numIters);
           System.out.println("learningVerbose:\t" + learningVerbose);
           System.out.println("stateVerbose:\t" + stateVerbose);
           System.out.println("debugVerbose:\t" + debugVerbose);
@@ -151,17 +152,39 @@ public class Main implements Runnable {
         }
         Params learnedParams = theModel.train(trainData);
         learnedParams.print("learnedParams");
-        trueParams.print("trueParams");
-        Report learnerReport = theModel.test(testData, learnedParams);
-        Report expertReport = theModel.test(testData, trueParams);
         
-        LogInfo.begin_track("learner");
-        learnerReport.print("learner");
-        LogInfo.end_track("learner");
+        if(Main.generateData && trueParams != null) {
+          trueParams.print("trueParams");
+        }
+        LogInfo.begin_track("trainReport");
+          Report learnerTrainReport = theModel.test(trainData, learnedParams);
+          
+          LogInfo.begin_track("learner");
+          learnerTrainReport.print("learner");
+          LogInfo.end_track("learner");
+          
+          if(Main.generateData && trueParams != null) {
+            LogInfo.begin_track("expert");
+            Report expertTrainReport = theModel.test(trainData, trueParams);
+            expertTrainReport.print("expert");
+            LogInfo.end_track("expert");
+          }
+        LogInfo.end_track("trainReport");
 
-        LogInfo.begin_track("expert");
-        expertReport.print("expert");
-        LogInfo.end_track("expert");
+
+        LogInfo.begin_track("testReport");
+          LogInfo.begin_track("learner");
+          Report learnerReport = theModel.test(testData, learnedParams);
+          learnerReport.print("learner");
+          LogInfo.end_track("learner");
+  
+          if(Main.generateData && trueParams != null) {
+              LogInfo.begin_track("expert");
+              Report expertReport = theModel.test(testData, trueParams);
+              expertReport.print("expert");
+              LogInfo.end_track("expert");
+          }
+        LogInfo.end_track("testReport");
       } else {
         throw new Exception("Model not supported");
       }

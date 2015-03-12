@@ -16,6 +16,6 @@ java -ea -Xmx5g -cp .:lib/fig.jar:lib/stanford-corenlp-3.5.1.jar:classes/default
  -fullySupervised True\
  -debugVerbose False\
  -stateVerbose False\
- -generateData True\
+ -generateData False\
  -numSamples 3000
  set +x # unset verbose

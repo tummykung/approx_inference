@@ -88,8 +88,11 @@ public class ModelAndLearning {
     return new Pair<ArrayList<Example>, Params>(data, params);
   }
 
-  public Params train(ArrayList<Example> trainData) {
+  public Params train(ArrayList<Example> trainData) throws Exception {
     LogInfo.begin_track("train");
+    if (trainData.size() == 0) {
+      throw new Exception("Need at least one train data sample!");
+    }
     Main.sentenceLength = trainData.get(0).getInput().length;
     // for now, assume all sentences are of 
     // the same length. TODO: generalize this.
@@ -198,7 +201,12 @@ public class ModelAndLearning {
 
 
       if ((Main.logLikelihoodVerbose && counter % 100 == 0) || (counter == trainData.size())) {
-        double averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHat);
+        double averageLogLikelihood;
+        if (Main.usingAveragingMethod) {
+          averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHatAverage);
+        } else {
+          averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHat);
+        }
         LogInfo.logs(
             counter + 
             ": trainDatasetAverageLogLikelihood:\t" +
@@ -212,7 +220,12 @@ public class ModelAndLearning {
 
     }
     LogInfo.end_track("train");
-    return thetaHatAverage;
+    if (Main.usingAveragingMethod) {
+      return thetaHatAverage;
+    } else {
+      return thetaHat;
+    }
+    
   }
   
   public ForwardBackward getForwardBackward(int[] x, Params params) {
