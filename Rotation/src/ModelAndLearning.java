@@ -1,146 +1,146 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+
+import util.Pair;
+import util.Triplet;
 import fig.basic.Fmt;
 import fig.basic.LogInfo;
 import fig.prob.SampleUtils;
 
 public class ModelAndLearning {
   private ArrayList<Example> data;
-  ForwardBackward the_model_for_each_x;
-  private Random randomizer;
-
-  // 0 = constant step size
-  // 1 = decreasing step size
- 
+  private Random randomizer; 
   private double eta; // stepsize
 
   public ModelAndLearning() {
     randomizer = new Random(Main.seed);
   }
 
-  public ArrayList<Example> generate_data() {
+  public Pair<ArrayList<Example>, Params> generateData() throws Exception {
     // return[n][0] = x is int[] and return[n][1] = y is also int[]
     // and n is the num sample iterator
     // TODO:  generate x from a uniform distribution and sample y.
 
     LogInfo.begin_track("generate_data");
     data = new ArrayList<Example>();
-    // int[num_samples][2][sentenceLength];
     // given parameters, generate data according to a log-linear model
     // fully supervised:
-    // p_{theta}(y | x) = 1/Z(theta; x) * exp(theta' * phi(x, z))
+    // p_{theta}(z | x) = 1/Z(theta; x) * exp(theta' * phi(x, z))
     //
     // full model:
     // p_{theta, xi} (y, z | x) = q_{xi}(y | z) * p_{theta}(z | x)
     // p_{theta}(z | x) = 1/Zp(theta; x) * exp(theta' * phi(x, z))
     // q_{xi}(y | z) = 1/Zq(xi; z) * exp(xi' * psi(y, z))
 
-    if(Main.state_verbose) {
-      System.out.println("generating data...");
-    }
-
     // FIXME: generate this from some distribution. e.g., a uniform distribution
     // the things below are p(y) only, not p(y | x). but it's good enough
-    // for testing emission probability updates.
-    double [][] edgeWeights = new double[][]{
-        {1, 10, 1},
-        {3, 4, 1},
-        {1, 2, 3}
-     };
+    // for testing emissions probability updates.
+    
+    // we will generate the x from a uniform distribution
+    if (Main.sentenceLength <= 0) {
+      throw new Exception("Please specify sentenceLength");
+    }
+    Params params = new Params(Main.rangeX, Main.rangeY);
 
-    // elements selected from X times Y
-    // dimension is N x S
-    double [][] nodeWeights = new double[][]{
-        {10, 2, 3},   // at x0
-        {4, 10, 4},   // at x1
-        {4, 3, 20},   // at x2
-        {5, 2, 1}     // at x3
-    };
-    ForwardBackward the_model_for_each_x = new ForwardBackward(
-        edgeWeights,
-        nodeWeights
-    );
-    the_model_for_each_x.infer();
+     for (int a = 0; a <= Main.rangeZ; a++)
+       for (int b = 0; b <= Main.rangeZ; b++)
+       {
+         if(a == b) {
+           params.transitions[a][b] = 10;
+         } else if (Math.abs(a - b) <= 1) {
+           params.transitions[a][b] = 5;
+         } else {
+           params.transitions[a][b] = 0;
+         }
+       }
 
-    for (int i = 0; i < Main.num_samples; i++) {
-       int[] seq = the_model_for_each_x.sample(randomizer);
-      Example example = new Example(seq, seq);
-      // TODO: change weight based on x. Right now just do identical
+     for (int a = 0; a <= Main.rangeZ; a++)
+       for (int c = 0; c <= Main.rangeX; c++) {
+         if(a == c) {
+           params.emissions[a][c] = 20;
+         } else if (Math.abs(a - c) <= 1) {
+           params.emissions[a][c] = 5;
+         } else {
+           params.emissions[a][c] = 0;
+         }
+       }
+
+    for (int n = 0; n < Main.numSamples; n++) {
+      int[] x = new int[Main.sentenceLength];
+      for(int i = 0; i < Main.sentenceLength; i++)
+        x[i] = Util.randInt(0, Main.rangeX);
+
+      ForwardBackward modelForEachX = getForwardBackward(x, params);
+      modelForEachX.infer();
+      int[] seq = modelForEachX.sample(randomizer);
+      Example example = new Example(x, seq);
       data.add(example);
     }
 
-    if(Main.state_verbose) {
+    if(Main.stateVerbose) {
       System.out.println("done genetaing data.\nnum data instances: " + data.size());
       if(data.size() < 100) {
         System.out.println("data: " + data);
       }
     }
     LogInfo.end_track("generate_data");
-    return data;
+    return new Pair<ArrayList<Example>, Params>(data, params);
   }
 
-  public Params train(ArrayList<Example> train_data) {
+  public Params train(ArrayList<Example> trainData) {
     LogInfo.begin_track("train");
-    Main.sentenceLength = train_data.get(0).getInput().length;
+    Main.sentenceLength = trainData.get(0).getInput().length;
     // for now, assume all sentences are of 
     // the same length. TODO: generalize this.
-    int featureTemplateNum = Main.sentenceLength;
     double delta = 10e-4;
     // returns: learned_theta
-    Params theta_hat = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
-    Params theta_hat_average = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
-    Params st = new Params(Main.rangeX, Main.rangeY, featureTemplateNum, delta); // for AdaGrad
+    Params thetaHat = new Params(Main.rangeX, Main.rangeY);
+    Params thetaHatAverage = new Params(Main.rangeX, Main.rangeY);
+    Params st = new Params(Main.rangeX, Main.rangeY, delta); // for AdaGrad
     int counter = 0;
-    int[] permuted_order = SampleUtils.samplePermutation(this.randomizer, train_data.size());
+    int[] permutedOrder = SampleUtils.samplePermutation(this.randomizer, trainData.size());
     
-    for (int exampleCounter = 0; exampleCounter < train_data.size(); exampleCounter++) {
-      Example sample = train_data.get(permuted_order[exampleCounter]);
+    for (int exampleCounter = 0; exampleCounter < trainData.size(); exampleCounter++) {
+      Example sample = trainData.get(permutedOrder[exampleCounter]);
       counter = exampleCounter + 1;
 //      int[] y = sample.getOutput();
       int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
       int[] x = sample.getInput();
       int L = x.length;
-      Params gradient = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
+      Params gradient = new Params(Main.rangeX, Main.rangeY);
 
-      if (Main.fully_supervised) {
+      if (Main.fullySupervised) {
         //initialize
-        Params positive_gradient = new Params(Main.rangeX, Main.rangeY, featureTemplateNum);
+        Params positiveGradient = new Params(Main.rangeX, Main.rangeY);
         for(int i = 0; i < L; i++) {
           if (i < L - 1)
-            positive_gradient.transitions[z[i]][z[i + 1]] += 1;
-          positive_gradient.emissions[z[i]][x[i]] += 1;
+            positiveGradient.transitions[z[i]][z[i + 1]] += 1;
+          positiveGradient.emissions[z[i]][x[i]] += 1;
         }
-        if (Main.extra_verbose) {
-          LogInfo.logs("x = " + Arrays.toString(x));
-          LogInfo.logs("z = " + Arrays.toString(z));
-          positive_gradient.print("positive_gradient");
+        if (Main.extraVerbose) {
+          LogInfo.logs("x:\t" + Arrays.toString(x));
+          LogInfo.logs("z:\t" + Arrays.toString(z));
+          positiveGradient.print("positiveGradient");
         }
 
-        double[][] nodeWeights = new double[x.length][Main.rangeZ];
-        double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
-        for (int a = 0; a < Main.rangeZ; a++)
-          for (int b = 0; b < Main.rangeZ; b++)
-            edgeWeights[a][b] = Math.exp(theta_hat.transitions[a][b]);
-        for (int i = 0; i < L; i++)
-          for (int a = 0; a < Main.rangeZ; a++)
-            nodeWeights[i][a] = Math.exp(theta_hat.emissions[a][x[i]]);
-        ForwardBackward the_model_for_each_x = new ForwardBackward(edgeWeights, nodeWeights);
-        the_model_for_each_x.infer();
+        ForwardBackward theModelForEachX = getForwardBackward(x, thetaHat);
+        theModelForEachX.infer();
 
-        Params E_cap_phi = expectation_cap_phi(x, theta_hat, the_model_for_each_x);
+        Params expectationCapPhi = expectationCapPhi(x, thetaHat, theModelForEachX);
 
-        if (Main.extra_verbose) {
-          E_cap_phi.print("E_cap_phi");
+        if (Main.extraVerbose) {
+          expectationCapPhi.print("expectationCapPhi");
         }
         // subtract
-        for (int a = 0; a < Main.rangeZ; a++)
-          for (int b = 0; b < Main.rangeZ; b++)
-            gradient.transitions[a][b] = positive_gradient.transitions[a][b] - E_cap_phi.transitions[a][b];
-        for (int a = 0; a < Main.rangeZ; a++)
-          for (int c = 0; c < Main.rangeX; c++)
-            gradient.emissions[a][c] = positive_gradient.emissions[a][c] - E_cap_phi.emissions[a][c];
+        for (int a = 0; a <= Main.rangeZ; a++)
+          for (int b = 0; b <= Main.rangeZ; b++)
+            gradient.transitions[a][b] = positiveGradient.transitions[a][b] - expectationCapPhi.transitions[a][b];
+        for (int a = 0; a <= Main.rangeZ; a++)
+          for (int c = 0; c <= Main.rangeX; c++)
+            gradient.emissions[a][c] = positiveGradient.emissions[a][c] - expectationCapPhi.emissions[a][c];
       } else {
+        // -- Indirect supervision -- 
 //        Z = calculate_Z(x, theta_hat)
 //        if approx_inference == 1:
 //          E_grad_phi = expectation_phi(x, theta_hat, Z, approx_inference)
@@ -160,150 +160,190 @@ public class ModelAndLearning {
 //          new_grad = difference_between_expectations(x, y, theta_hat, Z, xi, M)
       }
 
-      if (Main.gradient_descent_type == Main.DECREASING_STEP_SIZES) {
+      if (Main.gradientDescentType == Main.DECREASING_STEP_SIZES) {
         eta = Main.eta0/Math.sqrt(counter);
-      } else if (Main.gradient_descent_type == Main.CONSTANT_STEP_SIZES){
+      } else if (Main.gradientDescentType == Main.CONSTANT_STEP_SIZES){
         eta = Main.eta0;
       }
-      // if adagrad we'll do at the level of update itself
+      // if AdaGrad we'll do at the level of update itself
 
-      if (Main.extra_verbose) {
-        System.out.println("=====BEGIN DEBUG ZONE=====");
+      if (Main.extraVerbose) {
         gradient.print("gradient");
-        theta_hat.print("theta_hat");
-        theta_hat_average.print("theta_hat_average");
-        System.out.println("=====END DEBUG ZONE=====");
+        thetaHat.print("thetaHat");
+        thetaHatAverage.print("thetaHatAverage");
       }
 
-      for (int a = 0; a < Main.rangeZ; a++)
-        for (int b = 0; b < Main.rangeZ; b++) {
-          if (Main.gradient_descent_type == Main.ADAGRAD){
+      for (int a = 0; a <= Main.rangeZ; a++)
+        for (int b = 0; b <= Main.rangeZ; b++) {
+          if (Main.gradientDescentType == Main.ADAGRAD){
             st.transitions[a][b] += gradient.transitions[a][b] * gradient.transitions[a][b];
-            theta_hat.transitions[a][b] += Main.eta0/Math.sqrt(st.transitions[a][b]) * gradient.transitions[a][b];
+            thetaHat.transitions[a][b] += Main.eta0/Math.sqrt(st.transitions[a][b]) * gradient.transitions[a][b];
           } else
-            theta_hat.transitions[a][b] += eta * gradient.transitions[a][b];
-          theta_hat_average.transitions[a][b] =
-              (counter - 1)/(double)counter*theta_hat_average.transitions[a][b] +
-              1/(double)counter*theta_hat.transitions[a][b];
+            thetaHat.transitions[a][b] += eta * gradient.transitions[a][b];
+          thetaHatAverage.transitions[a][b] =
+              (counter - 1)/(double)counter*thetaHatAverage.transitions[a][b] +
+              1/(double)counter*thetaHat.transitions[a][b];
         }
-      for (int a = 0; a < Main.rangeZ; a++)
-        for (int c = 0; c < Main.rangeX; c++) {
-          if (Main.gradient_descent_type == Main.ADAGRAD){
+      for (int a = 0; a <= Main.rangeZ; a++)
+        for (int c = 0; c <= Main.rangeX; c++) {
+          if (Main.gradientDescentType == Main.ADAGRAD){
             st.emissions[a][c] += gradient.emissions[a][c] * gradient.emissions[a][c];
-            theta_hat.emissions[a][c] += Main.eta0/Math.sqrt(st.emissions[a][c]) * gradient.emissions[a][c];
+            thetaHat.emissions[a][c] += Main.eta0/Math.sqrt(st.emissions[a][c]) * gradient.emissions[a][c];
           } else
-            theta_hat.emissions[a][c] += eta * gradient.emissions[a][c];
-          theta_hat_average.emissions[a][c] =
-              (counter - 1)/(double)counter*theta_hat_average.emissions[a][c] +
-              1/(double)counter*theta_hat.emissions[a][c];
+            thetaHat.emissions[a][c] += eta * gradient.emissions[a][c];
+          thetaHatAverage.emissions[a][c] =
+              (counter - 1)/(double)counter*thetaHatAverage.emissions[a][c] +
+              1/(double)counter*thetaHat.emissions[a][c];
         }
 
 
-      if ((Main.log_likelihood_verbose && counter % 100 == 0) || (counter == train_data.size())) {
-        double average_log_likelihood = calculate_average_log_likelihood(train_data, theta_hat);
+      if ((Main.logLikelihoodVerbose && counter % 100 == 0) || (counter == trainData.size())) {
+        double averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHat);
         LogInfo.logs(
             counter + 
             ": train dataset average log-likelihood:\t" +
-            Fmt.D(average_log_likelihood)
+            Fmt.D(averageLogLikelihood)
         );
       }
-      if (Main.learning_verbose) {
-        LogInfo.logs(counter + ": theta_hat_average");
-        theta_hat_average.print("theta_hat_average");
+      if (Main.learningVerbose) {
+        LogInfo.logs(counter + ": thetaHatAverage");
+        thetaHatAverage.print("thetaHatAverage");
       }
 
     }
     LogInfo.end_track("train");
-    return theta_hat_average;
+    return thetaHatAverage;
   }
   
-  public double calculate_average_log_likelihood(ArrayList<Example> train_data, Params params) {
-    double total_log_likelihood = 0.0;
+  public ForwardBackward getForwardBackward(int[] x, Params params) {
+    int L = x.length;
+    double[][] nodeWeights = new double[x.length][Main.rangeZ + 1];
+    double[][] edgeWeights = new double[Main.rangeZ + 1][Main.rangeZ + 1];
+    for (int a = 0; a <= Main.rangeZ; a++)
+      for (int b = 0; b <= Main.rangeZ; b++) {
+        edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
+      }
+    for (int i = 0; i < L; i++)
+      for (int a = 0; a <= Main.rangeZ; a++)
+        nodeWeights[i][a] = Math.exp(params.emissions[a][x[i]]);
+    return new ForwardBackward(edgeWeights, nodeWeights);
+  }
+  
+  public double calculateAverageLogLikelihood(ArrayList<Example> trainData, Params params) {
+    double totalLogLikelihood = 0.0;
     int count = 0;
-    for (Example sample : train_data) {
+    for (Example sample : trainData) {
       count += 1;
       int[] y = (int[]) sample.getOutput();
       int[] z = (int[]) sample.getOutput(); // different semantics
       int[] x = (int[]) sample.getInput();
 
-      double[][] nodeWeights = new double[x.length][Main.rangeZ];
-      double[][] edgeWeights = new double[Main.rangeZ][Main.rangeZ];
-      for (int a = 0; a < Main.rangeZ; a++)
-        for (int b = 0; b < Main.rangeZ; b++)
-          edgeWeights[a][b] = Math.exp(params.transitions[a][b]);
-      for (int i = 0; i < x.length; i++)
-        for (int a = 0; a < Main.rangeZ; a++)
-          nodeWeights[i][a] = Math.exp(params.emissions[a][x[i]]);
-      ForwardBackward the_model_for_each_x = new ForwardBackward(edgeWeights, nodeWeights);
+      ForwardBackward the_model_for_each_x = getForwardBackward(x, params);
       the_model_for_each_x.infer();
       double logZ = the_model_for_each_x.getLogZ();
       
-      if(Main.fully_supervised) {
-        total_log_likelihood += logP(z, x, params, logZ);
+      if(Main.fullySupervised) {
+        totalLogLikelihood += logP(z, x, params, logZ);
       } else {
         //total_log_likelihood += logIndirectP(y, x, params, Main.xi);
       }
     }
-    return total_log_likelihood/(double)count;
+    return totalLogLikelihood/(double)count;
   }
   
+  public int[] predict(int[] x, Params params) {
+    ForwardBackward modelForX = getForwardBackward(x, params);
+    modelForX.infer();
+    return modelForX.getViterbi();
+  }
+  public Report test(ArrayList<Example> testData, Params params) {
+    int totalOK = 0;
+    int totalUnaryMatch = 0;
+    int totalPossibleUnaryMatch = 0;
+
+    for (Example example : testData) {
+      int[] x = example.getInput();
+      int[] z = example.getOutput();
+      int[] predictedZ = predict(z, params);
+      boolean exactMatch = true;
+      if (x.length != predictedZ.length)
+        exactMatch = false;
+      for(int i = 0; i < x.length; i++) {
+        if(x[i] == predictedZ[i]) {
+          totalUnaryMatch += 1;
+        } else
+          exactMatch = false;
+        totalPossibleUnaryMatch += 1;
+      }
+      if (exactMatch)
+        totalOK += 1;
+    }
+    return new Report(
+        totalOK,
+        testData.size(),
+        totalUnaryMatch,
+        totalPossibleUnaryMatch,
+        calculateAverageLogLikelihood(testData, params)
+    );
+  }
+
   public double logIndirectP(int[] y, int[] x, Params params, double xi) {
     // TODO
     return 0.9;
   }
     
   public double logP(int[] z, int[] x, Params params, double logZ) {
-    double the_sum = 0.0;
+    double theSum = 0.0;
     for(int i = 0; i < z.length; i++) {
       if(i < z.length - 1) {
-        the_sum += params.transitions[z[i]][z[i + 1]];
+        theSum += params.transitions[z[i]][z[i + 1]];
       }
-      the_sum += params.emissions[z[i]][x[i]];
+      theSum += params.emissions[z[i]][x[i]];
     }
-    double to_return = the_sum - logZ;
-    assert to_return < 0;
-    return to_return;
+    double toReturn = theSum - logZ;
+    assert toReturn <= 0;
+    return toReturn;
   }
 
-  public Params expectation_cap_phi(int[] x, Params params, ForwardBackward fwbw) {
+  public Params expectationCapPhi(int[] x, Params params, ForwardBackward fwbw) {
     Params totalParams = new Params(Main.rangeX, Main.rangeZ, Main.sentenceLength);
     int L = x.length;
 
     if(Main.inferType == Main.EXACT) {
-      for(int a = 0; a < Main.rangeZ; a++) {
-        for(int b = 0; b < Main.rangeZ; b++) {
-          double the_sum = 0.0;
+      for(int a = 0; a <= Main.rangeZ; a++) {
+        for(int b = 0; b <= Main.rangeZ; b++) {
+          double theSum = 0.0;
           for(int i = 0; i < L - 1; i++) {
-            double[][] edgePosteriors = new double[Main.rangeZ][Main.rangeZ];
+            double[][] edgePosteriors = new double[Main.rangeZ + 1][Main.rangeZ + 1];
             fwbw.getEdgePosteriors(i, edgePosteriors);
-            for(int zi = 0; zi < Main.rangeZ; zi++) {
-              for(int ziminus1 = 0; ziminus1 < Main.rangeZ; ziminus1++) {
+            for(int zi = 0; zi <= Main.rangeZ; zi++) {
+              for(int ziminus1 = 0; ziminus1 <= Main.rangeZ; ziminus1++) {
                 int part1 = Util.indicator(zi == a && ziminus1 == b);
                 // for an indicator function it seems like an overkill
                 // to loop over rangeZ^2, because E[I[b]] = Prob[b],
                 // but we keep this pattern for the generalization purpose.
                 double part2 = edgePosteriors[zi][ziminus1];
-                the_sum += part1 * part2;
+                theSum += part1 * part2;
               }
             }
           }
-          totalParams.transitions[a][b] = the_sum;
+          totalParams.transitions[a][b] = theSum;
         }
       }
 
-      for(int a = 0; a < Main.rangeZ; a++) {
-        for(int c = 0; c < Main.rangeX; c++) {
-          double the_sum = 0.0;
-          double[] nodePosteriors = new double[Main.rangeZ];
+      for(int a = 0; a <= Main.rangeZ; a++) {
+        for(int c = 0; c <= Main.rangeX; c++) {
+          double theSum = 0.0;
+          double[] nodePosteriors = new double[Main.rangeZ + 1];
           for(int i = 0; i < L - 1; i++) {
             fwbw.getNodePosteriors(i, nodePosteriors);
-            for(int zi = 0; zi < Main.rangeZ; zi++) {
+            for(int zi = 0; zi <= Main.rangeZ; zi++) {
               int part1 = Util.indicator(zi == a && x[i] == c);
               double part2 = nodePosteriors[zi];
-              the_sum += part1 * part2;
+              theSum += part1 * part2;
             }
           }
-          totalParams.emissions[a][c] = the_sum;
+          totalParams.emissions[a][c] = theSum;
         }
       }
     }
@@ -317,7 +357,7 @@ public class ModelAndLearning {
     return totalParams;
   }
 
-  public double difference_between_expectations(
+  public double differenceBetweenExpectations(
       int[] x, int[] y, double[] theta, double Z) {
 //    TODO
 //    output = np.array([0.0, 0.0, 0.0, 0.0])

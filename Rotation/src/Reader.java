@@ -11,7 +11,7 @@ public class Reader {
     String sub_state = "ground";
     Example example = new Example(null, null); // will be half-built after seeing an input
     for (String line : fig.basic.IOUtils.readLinesHard(source)) {
-      if (Main.debug_verbose) {
+      if (Main.debugVerbose) {
         System.out.println(line);
       }
       if(line.equals("----------BEGIN:train_data----------")) {

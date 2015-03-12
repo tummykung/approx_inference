@@ -7,28 +7,27 @@ import fig.basic.LogInfo;
 public class Params {
   public double[][] transitions;
   public double[][] emissions;
-//  double[][][] emissions; // [featureTemplateIndex][y][featureTemplateValue]
-  // phi(x) \otimes Y
+  // TODO: generalize this to phi(x) \otimes Y
   
   ArrayList<FeatureExtractor> features;
   double xi;
   
-  public Params(int X, int Y, int featureTemplateNum, double initial_value) {
-    transitions = new double[Y][Y]; // from left to right
-    emissions = new double[Y][X];
+  public Params(int rangeX, int rangeY, double initialValue) {
+    transitions = new double[rangeY + 1][rangeY + 1]; // from left to right
+    emissions = new double[rangeY + 1][rangeX + 1];
     
-    if (initial_value != 0) {
-      for (int a = 0; a < Y; a++)
-        for (int b = 0; b < Y; b++)
-          transitions[a][b] = initial_value;
+    if (initialValue != 0) {
+      for (int a = 0; a <= rangeY; a++)
+        for (int b = 0; b <= rangeY; b++)
+          transitions[a][b] = initialValue;
           
-    for (int a = 0; a < Y; a++)
-      for (int c = 0; c < X; c++)
-        emissions[a][c] = initial_value;
+    for (int a = 0; a <= rangeY; a++)
+      for (int c = 0; c <= rangeX; c++)
+        emissions[a][c] = initialValue;
     }
   }
-  public Params(int X, int Y, int featureTemplateNum) {
-    this(X, Y, featureTemplateNum, 0);
+  public Params(int rangeX, int rangeY) {
+    this(rangeX, rangeY, 0);
   }
   
   public void print(String name) {

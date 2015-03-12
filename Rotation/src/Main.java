@@ -42,11 +42,11 @@ public class Main implements Runnable {
     //  3 = Normalized importance sampling by
     //    - using the model weight as the proposal distribution
     @Option(required=true)
-    public static boolean fully_supervised; // can switch to fully supervised for sanity check
+    public static boolean fullySupervised; // can switch to fully supervised for sanity check
 
     // (optional) flag for generating data
     @Option(required=false)
-    public static boolean generate_data;
+    public static boolean generateData;
     @Option(required=false)
     public static String datasource = ""; // a path to data-set source
 
@@ -58,7 +58,7 @@ public class Main implements Runnable {
     @Option(required=false)
     public static double eta0 = 0.3; // gradient descent initial step size
     @Option(required=false)
-    public static int gradient_descent_type = ADAGRAD;
+    public static int gradientDescentType = ADAGRAD;
     @Option(required=false)
     public static long numiters = 10; // the number of samples in approximate inference
     @Option(required=false)
@@ -68,24 +68,23 @@ public class Main implements Runnable {
 
     // (optional) flags
     @Option(required=false)
-    public static boolean learning_verbose = false;
+    public static boolean learningVerbose = false;
     @Option(required=false)
-    public static boolean state_verbose = true;
+    public static boolean stateVerbose = true;
     @Option(required=false)
-    public static boolean debug_verbose = true;
+    public static boolean debugVerbose = true;
     @Option(required=false)
-    public static boolean extra_verbose = false;
+    public static boolean extraVerbose = false;
     @Option(required=false)
-    public static boolean log_likelihood_verbose = true;
+    public static boolean logLikelihoodVerbose = true;
     @Option(required=false)
-    public static boolean prediction_verbose = false;
+    public static boolean predictionVerbose = false;
     @Option(required=false)
-    public static boolean sanity_check = false;
-    
+    public static boolean sanityCheck = false;
 
     // for data generating
     @Option(required=false)
-    public static int num_samples = 400;
+    public static int numSamples = 400;
     @Option(required=false)
     public static int sentenceLength;
     @Option(required=false)
@@ -116,64 +115,79 @@ public class Main implements Runnable {
 
     void runWithException() throws Exception {
       if (model.equals("LinearChainCRF")) {
-        ModelAndLearning the_model = new ModelAndLearning();
+        ModelAndLearning theModel = new ModelAndLearning();
         
-        ArrayList<Example> train_data = new ArrayList<Example>();
-        ArrayList<Example> test_data = new ArrayList<Example>();
+        ArrayList<Example> trainData = new ArrayList<Example>();
+        ArrayList<Example> testData = new ArrayList<Example>();
+        Params trueParams = null; //only if we generate data using model features
 
-        if (!generate_data) {
+        if (!generateData) {
           if(datasource.equals("")) {
-            String message = "If the flag generate_data is false, then the source path must be specified.";
+            String message = "If the flag generateData is false, then the source path must be specified.";
             throw new Exception(message);
           }
-          Pair<ArrayList<Example>, ArrayList<Example>> train_and_test = Reader.read(datasource);
-          train_data = train_and_test.getFirst();
-          test_data = train_and_test.getSecond();
-          num_samples = train_data.size() + test_data.size();
+          Pair<ArrayList<Example>, ArrayList<Example>> trainAndTest = Reader.read(datasource);
+          trainData = trainAndTest.getFirst();
+          testData = trainAndTest.getSecond();
+          numSamples = trainData.size() + testData.size();
         } else {
-          ArrayList<Example> data = the_model.generate_data();
-          double percent_trained = 0.80;
-          int num_trained = (int) Math.round(percent_trained * data.size());
+          Pair<ArrayList<Example>, Params> dataAndParams = theModel.generateData();
+          ArrayList<Example> data = dataAndParams.getFirst();
+          trueParams = dataAndParams.getSecond();
+          double percentTrained = 0.80;
+          int numTrained = (int) Math.round(percentTrained * data.size());
           for(int i = 0; i < data.size(); i++) {
-            if(i < num_trained) {
-              train_data.add(data.get(i));
+            if(i < numTrained) {
+              trainData.add(data.get(i));
             } else {
-              test_data.add(data.get(i));
+              testData.add(data.get(i));
             }
           }
         }
 
-        if (debug_verbose) {
-          System.out.println("----------BEGIN:train_data----------");
-          for(Example example : train_data) {
+        if (debugVerbose) {
+          System.out.println("----------BEGIN:trainData----------");
+          for(Example example : trainData) {
             System.out.println(example);
           }
-          System.out.println("----------END:train_data----------");
-          System.out.println("----------BEGIN:test_data----------");
-          for(Example example : test_data) {
+          System.out.println("----------END:trainData----------");
+          System.out.println("----------BEGIN:testData----------");
+          for(Example example : testData) {
             System.out.println(example);
           }
-          System.out.println("----------END:test_data----------");
+          System.out.println("----------END:testData----------");
 
 
           System.out.println("experimentName:\t" + experimentName);
           System.out.println("model:\t" + model);
           System.out.println("eta0:\t" + eta0);
-          System.out.println("gradient_descent_type:\t" + gradient_descent_type);
+          System.out.println("gradientDescentType:\t" + gradientDescentType);
           System.out.println("numiters:\t" + numiters);
-          System.out.println("learning_verbose:\t" + learning_verbose);
-          System.out.println("state_verbose:\t" + state_verbose);
-          System.out.println("debug_verbose:\t" + debug_verbose);
-          System.out.println("log_likelihood_verbose:\t" + log_likelihood_verbose);
-          System.out.println("prediction_verbose:\t" + prediction_verbose);
-          System.out.println("sanity_check:\t" + sanity_check);
-          System.out.println("num_samples:\t" + num_samples);
+          System.out.println("learningVerbose:\t" + learningVerbose);
+          System.out.println("stateVerbose:\t" + stateVerbose);
+          System.out.println("debugVerbose:\t" + debugVerbose);
+          System.out.println("logLikelihoodVerbose:\t" + logLikelihoodVerbose);
+          System.out.println("predictionVerbose:\t" + predictionVerbose);
+          System.out.println("sanityCheck:\t" + sanityCheck);
+          System.out.println("num_samples:\t" + numSamples);
           System.out.println("sentenceLength:\t" + sentenceLength);
           System.out.println("rangeX:\t" + rangeX);
           System.out.println("rangeY:\t" + rangeY);
           System.out.println("rangeZ:\t" + rangeZ);
         }
-        the_model.train(train_data);
+        Params learnedParams = theModel.train(trainData);
+        learnedParams.print("learnedParams");
+        trueParams.print("trueParams");
+        Report learnerReport = theModel.test(testData, learnedParams);
+        Report expertReport = theModel.test(testData, trueParams);
+        
+        LogInfo.begin_track("learner");
+        learnerReport.print("learner");
+        LogInfo.end_track("learner");
+
+        LogInfo.begin_track("expert");
+        expertReport.print("expert");
+        LogInfo.end_track("expert");
       } else {
         throw new Exception("Model not supported");
       }

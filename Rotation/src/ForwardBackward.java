@@ -113,7 +113,7 @@ public class ForwardBackward {
           }
         }
 
-        if(Main.sanity_check) {
+        if(Main.sanityCheck) {
           NumUtils.assertIsFinite(A);
           NumUtils.assertIsFinite(B);
         }
