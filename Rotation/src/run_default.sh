@@ -9,7 +9,7 @@ java -ea -Xmx5g -cp .:lib/fig.jar:lib/stanford-corenlp-3.5.1.jar:classes/default
  -log.stdout True\
  -experimentName default\
  -model LinearChainCRF\
- -dataSource ../data/a.txt\
+ -dataSource ../data/b.txt\
  -numIters 20\
  -inferType 0\
  -sentenceLength 5\

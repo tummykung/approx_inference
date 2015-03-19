@@ -9,6 +9,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Random;
 
 import util.CommandLineUtils;
 import util.Pair;
@@ -16,7 +17,6 @@ import fig.basic.*;
 import fig.exec.*;
 
 public class Main implements Runnable {
-    public final static long DEFAULT_SEED = 989181171;
 
     final public static int
         EXACT = 0,
@@ -27,6 +27,7 @@ public class Main implements Runnable {
         CONSTANT_STEP_SIZES = 0,
         DECREASING_STEP_SIZES = 1,
         ADAGRAD = 2;
+
 
     /** Inference Type
      * 0 =  Exact
@@ -50,7 +51,7 @@ public class Main implements Runnable {
     @Option(required=false) public static int gradientDescentType = ADAGRAD;
     @Option(required=false) public static long numIters = 10; // the number of samples in approximate inference
     @Option(required=false) public static double xi = 10.0; // the number of samples in approximate inference
-    @Option(required=false) public static long seed = 12345671;
+    @Option(required=false) public static long seed;
     @Option(required=false) public static boolean usingAveragingMethod = true;
 
     // (optional) flags
@@ -68,6 +69,8 @@ public class Main implements Runnable {
     @Option(required=false) public static int rangeX = 5;
     @Option(required=false) public static int rangeY = 5;
     @Option(required=false) public static int rangeZ = 5;
+    
+    public static Random randomizer;
 
     public static void main(String[] args) throws Exception {
       OptionsParser parser = new OptionsParser();
@@ -89,6 +92,9 @@ public class Main implements Runnable {
     }
 
     void runWithException() throws Exception {
+      // initialize randomizer
+      randomizer = new Random(Main.seed);
+      
       if (model.equals("LinearChainCRF")) {
         ModelAndLearning theModel = new ModelAndLearning();
         
@@ -106,7 +112,15 @@ public class Main implements Runnable {
           testData = trainAndTest.getSecond();
           numSamples = trainData.size() + testData.size();
         } else {
-          Pair<ArrayList<Example>, Params> dataAndParams = theModel.generateData();
+          double lambda1 = 1.0;
+          double lambda2 = 0.3;
+          double alpha = 0.9;
+          ArrayList<String> words = new ArrayList<String>();
+          words.add("test");
+          words.add("what");
+          GenerateData.generateDataSpeech(lambda1, lambda2, alpha, words);
+
+          Pair<ArrayList<Example>, Params> dataAndParams = GenerateData.generateData();
           ArrayList<Example> data = dataAndParams.getFirst();
           trueParams = dataAndParams.getSecond();
           double percentTrained = 0.80;
@@ -160,13 +174,13 @@ public class Main implements Runnable {
           Report learnerTrainReport = theModel.test(trainData, learnedParams);
           
           LogInfo.begin_track("learner");
-          learnerTrainReport.print("learner");
+          learnerTrainReport.print("train.learner");
           LogInfo.end_track("learner");
           
           if(Main.generateData && trueParams != null) {
             LogInfo.begin_track("expert");
             Report expertTrainReport = theModel.test(trainData, trueParams);
-            expertTrainReport.print("expert");
+            expertTrainReport.print("train.expert");
             LogInfo.end_track("expert");
           }
         LogInfo.end_track("trainReport");
@@ -175,13 +189,13 @@ public class Main implements Runnable {
         LogInfo.begin_track("testReport");
           LogInfo.begin_track("learner");
           Report learnerReport = theModel.test(testData, learnedParams);
-          learnerReport.print("learner");
+          learnerReport.print("test.learner");
           LogInfo.end_track("learner");
   
           if(Main.generateData && trueParams != null) {
               LogInfo.begin_track("expert");
               Report expertReport = theModel.test(testData, trueParams);
-              expertReport.print("expert");
+              expertReport.print("test.expert");
               LogInfo.end_track("expert");
           }
         LogInfo.end_track("testReport");

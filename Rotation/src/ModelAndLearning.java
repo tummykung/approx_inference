@@ -9,83 +9,10 @@ import fig.basic.LogInfo;
 import fig.prob.SampleUtils;
 
 public class ModelAndLearning {
-  private ArrayList<Example> data;
-  private Random randomizer; 
   private double eta; // stepsize
 
   public ModelAndLearning() {
-    randomizer = new Random(Main.seed);
-  }
-
-  public Pair<ArrayList<Example>, Params> generateData() throws Exception {
-    // return[n][0] = x is int[] and return[n][1] = y is also int[]
-    // and n is the num sample iterator
-    // TODO:  generate x from a uniform distribution and sample y.
-
-    LogInfo.begin_track("generate_data");
-    data = new ArrayList<Example>();
-    // given parameters, generate data according to a log-linear model
-    // fully supervised:
-    // p_{theta}(z | x) = 1/Z(theta; x) * exp(theta' * phi(x, z))
-    //
-    // full model:
-    // p_{theta, xi} (y, z | x) = q_{xi}(y | z) * p_{theta}(z | x)
-    // p_{theta}(z | x) = 1/Zp(theta; x) * exp(theta' * phi(x, z))
-    // q_{xi}(y | z) = 1/Zq(xi; z) * exp(xi' * psi(y, z))
-
-    // FIXME: generate this from some distribution. e.g., a uniform distribution
-    // the things below are p(y) only, not p(y | x). but it's good enough
-    // for testing emissions probability updates.
     
-    // we will generate the x from a uniform distribution
-    if (Main.sentenceLength <= 0) {
-      throw new Exception("Please specify sentenceLength");
-    }
-    Params params = new Params(Main.rangeX, Main.rangeY);
-
-     for (int a = 0; a <= Main.rangeZ; a++)
-       for (int b = 0; b <= Main.rangeZ; b++)
-       {
-         if(a == b) {
-           params.transitions[a][b] = 15;
-         } else if (Math.abs(a - b) <= 1) {
-           params.transitions[a][b] = 5;
-         } else {
-           params.transitions[a][b] = 0;
-         }
-       }
-
-     for (int a = 0; a <= Main.rangeZ; a++)
-       for (int c = 0; c <= Main.rangeX; c++) {
-         if(a == c) {
-           params.emissions[a][c] = 20;
-         } else if (Math.abs(a - c) <= 1) {
-           params.emissions[a][c] = 5;
-         } else {
-           params.emissions[a][c] = 0;
-         }
-       }
-
-    for (int n = 0; n < Main.numSamples; n++) {
-      int[] x = new int[Main.sentenceLength];
-      for(int i = 0; i < Main.sentenceLength; i++)
-        x[i] = Util.randInt(0, Main.rangeX);
-
-      ForwardBackward modelForEachX = getForwardBackward(x, params);
-      modelForEachX.infer();
-      int[] seq = modelForEachX.sample(randomizer);
-      Example example = new Example(x, seq);
-      data.add(example);
-    }
-
-    if(Main.stateVerbose) {
-      System.out.println("done genetaing data.\nnum data instances: " + data.size());
-      if(data.size() < 100) {
-        System.out.println("data: " + data);
-      }
-    }
-    LogInfo.end_track("generate_data");
-    return new Pair<ArrayList<Example>, Params>(data, params);
   }
 
   public Params train(ArrayList<Example> trainData) throws Exception {
@@ -93,7 +20,7 @@ public class ModelAndLearning {
     if (trainData.size() == 0) {
       throw new Exception("Need at least one train data sample!");
     }
-    Main.sentenceLength = trainData.get(0).getInput().length;
+    Main.sentenceLength = trainData.get(0).getInput().size();
     // for now, assume all sentences are of 
     // the same length. TODO: generalize this.
     double delta = 10e-4;
@@ -102,15 +29,15 @@ public class ModelAndLearning {
     Params thetaHatAverage = new Params(Main.rangeX, Main.rangeY);
     Params st = new Params(Main.rangeX, Main.rangeY, delta); // for AdaGrad
     int counter = 0;
-    int[] permutedOrder = SampleUtils.samplePermutation(this.randomizer, trainData.size());
+    int[] permutedOrder = SampleUtils.samplePermutation(Main.randomizer, trainData.size());
     
     for (int exampleCounter = 0; exampleCounter < trainData.size(); exampleCounter++) {
       Example sample = trainData.get(permutedOrder[exampleCounter]);
       counter = exampleCounter + 1;
 //      int[] y = sample.getOutput();
-      int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
-      int[] x = sample.getInput();
-      int L = x.length;
+      ArrayList z = sample.getOutput(); // different semantics, used for fully_supervised case
+      ArrayList x = sample.getInput();
+      int L = x.size();
       Params gradient = new Params(Main.rangeX, Main.rangeY);
 
       if (Main.fullySupervised) {
@@ -118,8 +45,8 @@ public class ModelAndLearning {
         Params positiveGradient = new Params(Main.rangeX, Main.rangeY);
         for(int i = 0; i < L; i++) {
           if (i < L - 1)
-            positiveGradient.transitions[z[i]][z[i + 1]] += 1;
-          positiveGradient.emissions[z[i]][x[i]] += 1;
+            positiveGradient.transitions[z.get(i)][z.get(i + 1)] += 1;
+          positiveGradient.emissions[z.get(i)][x.get(i)] += 1;
         }
         if (Main.extraVerbose) {
           LogInfo.logs("x:\t" + Arrays.toString(x));
@@ -225,12 +152,11 @@ public class ModelAndLearning {
     } else {
       return thetaHat;
     }
-    
   }
   
-  public ForwardBackward getForwardBackward(int[] x, Params params) {
-    int L = x.length;
-    double[][] nodeWeights = new double[x.length][Main.rangeZ + 1];
+  public static ForwardBackward getForwardBackward(ArrayList<Integer> x, Params params) {
+    int L = x.size();
+    double[][] nodeWeights = new double[x.size()][Main.rangeZ + 1];
     double[][] edgeWeights = new double[Main.rangeZ + 1][Main.rangeZ + 1];
     for (int a = 0; a <= Main.rangeZ; a++)
       for (int b = 0; b <= Main.rangeZ; b++) {
@@ -238,11 +164,11 @@ public class ModelAndLearning {
       }
     for (int i = 0; i < L; i++)
       for (int a = 0; a <= Main.rangeZ; a++)
-        nodeWeights[i][a] = Math.exp(params.emissions[a][x[i]]);
+        nodeWeights[i][a] = Math.exp(params.emissions[a][x.get()]);
     return new ForwardBackward(edgeWeights, nodeWeights);
   }
   
-  public double calculateAverageLogLikelihood(ArrayList<Example> trainData, Params params) {
+  public double calculateAverageLogLikelihood(ArrayList<Example> trainData, Params params) throws Exception {
     double totalLogLikelihood = 0.0;
     int count = 0;
     for (Example sample : trainData) {
@@ -258,7 +184,7 @@ public class ModelAndLearning {
       if(Main.fullySupervised) {
         totalLogLikelihood += logP(z, x, params, logZ);
       } else {
-        //total_log_likelihood += logIndirectP(y, x, params, Main.xi);
+        totalLogLikelihood += logIndirectP(y, x, params, Main.xi, the_model_for_each_x);
       }
     }
     return totalLogLikelihood/(double)count;
@@ -269,7 +195,7 @@ public class ModelAndLearning {
     modelForX.infer();
     return modelForX.getViterbi();
   }
-  public Report test(ArrayList<Example> testData, Params params) {
+  public Report test(ArrayList<Example> testData, Params params) throws Exception {
     int totalExactMatch = 0;
     int totalUnaryMatch = 0;
     int totalPossibleUnaryMatch = 0;
@@ -301,9 +227,20 @@ public class ModelAndLearning {
     );
   }
 
-  public double logIndirectP(int[] y, int[] x, Params params, double xi) {
-    // TODO
+  public double logIndirectP(int[] y, int[] x, Params params, double xi, ForwardBackward fwbw) {
+    int M = 1000;
+    for(int i = 0; i < M; i++) {
+      int[] z = fwbw.sample(Main.randomizer);
+    }
+
     return 0.9;
+  }
+  
+  public double logQ(int[] y, int[] z, Params params, double logZ) {
+    double theSum = 0.0;
+    double toReturn = theSum - logZ;
+    assert toReturn <= 0;
+    return toReturn;
   }
     
   public double logP(int[] z, int[] x, Params params, double logZ) {
