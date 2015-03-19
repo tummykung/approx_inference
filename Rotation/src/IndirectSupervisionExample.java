@@ -1,16 +1,20 @@
 import java.util.ArrayList;
 
 
-public class IndirectSupervisionExample<X, Y, Z> extends Example<X, Y>{
+abstract class IndirectSupervisionExample<X, Y, Z> extends Example<X, Y>{
 
-  private ArrayList<Z> z;
+  private ArrayList<Z> z_orig;
+  private int[] z;
 
-  public IndirectSupervisionExample(ArrayList<X> x, ArrayList<Y> y, ArrayList<Z> z) {
+  public IndirectSupervisionExample(ArrayList<X> x, ArrayList<Y> y, ArrayList<Z> z_orig) {
     super(x, y);
-    this.z = z;
+    this.z_orig = z_orig;
+    this.z = convertToInt(z_orig);
   }
 
-  public ArrayList<Z> getLatent() {
+  abstract int[] convertToInt(ArrayList<Z> lst);
+
+  public int[] getLatent() {
     return z;
   }
   
