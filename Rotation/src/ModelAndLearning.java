@@ -107,13 +107,14 @@ public class ModelAndLearning {
           averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHat);
         }
         LogInfo.logs(
-            counter + 
-            ": trainDatasetAverageLogLikelihood:\t" +
+            "trainDatasetAverageLogLikelihood:\t" +
+            counter +
+            "\t" +
             Fmt.D(averageLogLikelihood)
         );
       }
       if (Main.learningVerbose) {
-        LogInfo.logs(counter + ": thetaHatAverage");
+        LogInfo.logs("thetaHatAverage:\t" + counter);
         thetaHatAverage.print("thetaHatAverage");
       }
     }
@@ -194,13 +195,14 @@ public class ModelAndLearning {
           averageLogLikelihood = calculateAverageLogLikelihood(trainDataCasted, thetaHat);
         }
         LogInfo.logs(
-            counter + 
-            ": trainDatasetAverageLogLikelihood:\t" +
+            "trainDatasetAverageLogLikelihood:\t" +
+            counter +
+            "\t" +
             Fmt.D(averageLogLikelihood)
         );
       }
       if (Main.learningVerbose) {
-        LogInfo.logs(counter + ": thetaHatAverage");
+        LogInfo.logs("thetaHatAverage:\t" + counter);
         thetaHatAverage.print("thetaHatAverage");
       }
     }
@@ -236,6 +238,12 @@ public class ModelAndLearning {
       int[] z = sample.getOutput(); // different semantics
       int[] x = sample.getInput();
 
+//      System.out.println(AlignmentExample.toStringHumanReadable(y, "y:"));
+//      System.out.println(AlignmentExample.toStringHumanReadable(z, "z:"));
+//      System.out.println(AlignmentExample.toStringHumanReadable(x, "x:"));
+//      System.out.println(Fmt.D(y));
+//      System.out.println(Fmt.D(z));
+//      System.out.println(Fmt.D(x));
       ForwardBackward the_model_for_each_x = getForwardBackward(x, params);
       the_model_for_each_x.infer();
       double logZ = the_model_for_each_x.getLogZ();
@@ -306,14 +314,17 @@ public class ModelAndLearning {
   }
 
   public double logIndirectP(int[] y, int[] x, Params params, double xi, ForwardBackward fwbw) throws Exception {
-    int M = 100;
+    int M = 20;
     double the_sum = 0;
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);
-      the_sum += logQ(y, z, params);
+      double logQ = logQ(y, z, params);
+      System.out.println("logQ = " + logQ);
+      the_sum += Math.exp(logQ);
     }
-
-    return the_sum/M;
+    System.out.println("xi = " + xi);
+    System.out.println("the_sum/M = " + the_sum/M);
+    return Math.log(the_sum/M);
   }
 
   public double logQ(int[] y, int[] z, Params params) throws Exception {

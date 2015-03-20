@@ -6,12 +6,12 @@ import java.util.StringTokenizer;
 
 public class WordReader{
 
-    public static List<String> read(String filename) throws Exception {
+    public static ArrayList<String> read(String filename) throws Exception {
         StringTokenizer st;
         BufferedReader File = new BufferedReader(new FileReader(filename));
 
-        List<String> words = new ArrayList<String>();
-        
+        ArrayList<String> words = new ArrayList<String>();
+
         String line = File.readLine(); // Read first line.
 
         while (line != null){

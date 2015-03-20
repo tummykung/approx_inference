@@ -7,11 +7,8 @@
 //import java.util.*;
 //import java.lang.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Random;
 
-import util.CommandLineUtils;
 import util.Pair;
 import fig.basic.*;
 import fig.exec.*;
@@ -43,7 +40,8 @@ public class Main implements Runnable {
 
     // (optional) flag for generating data
     @Option(required=false) public static boolean generateData;
-    @Option(required=false) public static String datasource = ""; // a path to data-set source
+    @Option(required=false) public static String dataSource = ""; // a path to data-set source
+    @Option(required=false) public static String wordSource = ""; // a path to a list of words source
 
     // (optional) model parameters
     @Option(required=false) public static String experimentName = "SCRATCH";
@@ -100,20 +98,19 @@ public class Main implements Runnable {
         if (fullySupervised) {
           ArrayList<FullSupervisionExample> trainData = new ArrayList<FullSupervisionExample>();
           ArrayList<FullSupervisionExample> testData = new ArrayList<FullSupervisionExample>();
-          
+
           Params trueParams = null; //only if we generate data using model features
 
           if (!generateData) {
-            if(datasource.equals("")) {
+            if(dataSource.equals("")) {
               String message = "If the flag generateData is false, then the source path must be specified.";
               throw new Exception(message);
             }
-            Pair<ArrayList<FullSupervisionExample>, ArrayList<FullSupervisionExample>> trainAndTest = FullSupervisionReader.read(datasource);
+            Pair<ArrayList<FullSupervisionExample>, ArrayList<FullSupervisionExample>> trainAndTest = FullSupervisionReader.read(dataSource);
             trainData = trainAndTest.getFirst();
             testData = trainAndTest.getSecond();
             numSamples = trainData.size() + testData.size();
           } else {
-
             trueParams = new Params(Main.rangeX, Main.rangeY);
 
             for (int a = 0; a <= Main.rangeZ; a++)
@@ -223,9 +220,10 @@ public class Main implements Runnable {
           Global.lambda1 = 1.0;
           Global.lambda2 = 0.3;
           Global.alpha = 0.9;
-          ArrayList<String> words = new ArrayList<String>();
-          words.add("test");
-          words.add("what");
+          ArrayList<String> words = WordReader.read(wordSource);
+//          ArrayList<String> words = new ArrayList<String>();
+//          words.add("test");
+//          words.add("what");
           ArrayList<AlignmentExample> data = GenerateData.generateDataSpeech(words);
           double percentTrained = 0.80;
           int numTrained = (int) Math.round(percentTrained * data.size());
