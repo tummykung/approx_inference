@@ -1,14 +1,5 @@
-import java.util.ArrayList;
-
-
-abstract class IndirectSupervisionExample<X, Y, Z> extends Example{
-
-  private ArrayList<Z> z_orig;
-  private int[] z;
-  private ArrayList<Y> y_orig;
-  private int[] y;
-  private ArrayList<X> x_orig;
-  private int[] x;
+public class IndirectSupervisionExample<X, Y, Z> extends Example{
+  protected int[] z;
 
   public IndirectSupervisionExample(int[] x, int[] y, int[] z) {
     super(x, y);

@@ -204,7 +204,6 @@ public class Main implements Runnable {
             }
           LogInfo.end_track("trainReport");
 
-
           LogInfo.begin_track("testReport");
             LogInfo.begin_track("learner");
             Report learnerReport = theModel.testFullSupervision(testData, learnedParams);
@@ -220,9 +219,9 @@ public class Main implements Runnable {
           LogInfo.end_track("testReport");
         } else {
           // not fully supervised
-          double lambda1 = 1.0;
-          double lambda2 = 0.3;
-          double alpha = 0.9;
+          Global.lambda1 = 1.0;
+          Global.lambda2 = 0.3;
+          Global.alpha = 0.9;
           ArrayList<String> words = new ArrayList<String>();
           words.add("test");
           words.add("what");

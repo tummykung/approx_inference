@@ -24,9 +24,9 @@ public class AlignmentExample extends IndirectSupervisionExample {
       if(str.charAt(0) == '0'){
         ret[i] = 2 * Main.alphabetSize;
       } else if(str.charAt(0) == 'B'){
-        ret[i] = (int)(str.charAt(0) - 'a');
+        ret[i] = (int)(str.charAt(2) - 'a');
       } else if(str.charAt(0) == 'I'){
-        ret[i] = Main.alphabetSize + (int)(str.charAt(0) - 'a');
+        ret[i] = Main.alphabetSize + (int)(str.charAt(2) - 'a');
       }
     }
     return ret;
@@ -42,5 +42,60 @@ public class AlignmentExample extends IndirectSupervisionExample {
 
   public static int[] convertYToInt(ArrayList<Character> lst){
     return convertXToInt(lst);
+  }
+  
+  public String toStringHumanReadable() {
+    StringBuilder b = new StringBuilder();
+    b.append("input ");
+    for (int i = 0; i < x.length; i++) {
+      b.append(x[i]);
+      if (i < x.length - 1)
+        b.append(" ");
+    }
+    b.append("\n");
+
+    b.append("latent ");
+    for (int i = 0; i < z.length; i++) {
+      b.append(z[i]);
+      if (i < z.length - 1)
+        b.append(" ");
+    }
+    b.append("\n");
+
+    b.append("output ");
+    for (int i = 0; i < y.length; i++) {
+      b.append(y[i]);
+      if (i < y.length - 1)
+        b.append(" ");
+    }
+    return b.toString();
+  }
+  
+  @Override
+  public String toString() {
+    StringBuilder b = new StringBuilder();
+    b.append("input ");
+    for (int i = 0; i < x.length; i++) {
+      b.append(x[i]);
+      if (i < x.length - 1)
+        b.append(" ");
+    }
+    b.append("\n");
+
+    b.append("latent ");
+    for (int i = 0; i < z.length; i++) {
+      b.append(z[i]);
+      if (i < z.length - 1)
+        b.append(" ");
+    }
+    b.append("\n");
+
+    b.append("output ");
+    for (int i = 0; i < y.length; i++) {
+      b.append(y[i]);
+      if (i < y.length - 1)
+        b.append(" ");
+    }
+    return b.toString();
   }
 }

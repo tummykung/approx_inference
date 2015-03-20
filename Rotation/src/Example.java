@@ -1,9 +1,6 @@
-import java.util.ArrayList;
-
-
 public class Example {
-  private int[] x;
-  private int[] y;
+  protected int[] x;
+  protected int[] y;
 
   public Example(int[] x, int[] y) {
     this.x = x;
@@ -30,7 +27,6 @@ public class Example {
   public String toString() {
     StringBuilder b = new StringBuilder();
     b.append("input ");
-    b.append(x);
     for (int i = 0; i < x.length; i++) {
       b.append(x[i]);
       if (i < x.length - 1)

@@ -39,7 +39,6 @@ public class GenerateData {
           zs.add("O");
         }
       }
-      System.out.println("");
 
       // generate x
       ArrayList<Character> xs = new ArrayList<Character>(); 
@@ -59,7 +58,9 @@ public class GenerateData {
           c = A[Main.randomizer.nextInt(A.length)];
         }
       }
-      examples.add(new AlignmentExample(xs, ys, zs));
+      AlignmentExample t = new AlignmentExample(xs, ys, zs);
+      System.out.println(t);
+      examples.add(t);
     }
 
     return examples;
