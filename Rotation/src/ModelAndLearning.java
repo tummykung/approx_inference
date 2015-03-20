@@ -260,7 +260,12 @@ public class ModelAndLearning {
   public int[] predict(int[] x, Params params) {
     ForwardBackward modelForX = getForwardBackward(x, params);
     modelForX.infer();
-    return modelForX.getViterbi();
+    int[] most_likely = modelForX.getViterbi();
+    if (Main.fullySupervised) {
+      return most_likely;
+    } else {
+      return AlignmentExample.denotation(most_likely);
+    }
   }
   public Report testFullSupervision(ArrayList<FullSupervisionExample> testData, Params params) throws Exception {
     // cast
@@ -298,9 +303,9 @@ public class ModelAndLearning {
         LogInfo.logs("");
       }
       boolean exactMatch = true;
-      if (x.length != predictedY.length)
+      if (y.length != predictedY.length)
         exactMatch = false;
-      int minLenth = Math.min(x.length, y.length);
+      int minLenth = Math.min(predictedY.length, y.length);
       for(int i = 0; i < minLenth; i++) {
         if(x[i] == predictedY[i]) {
           totalUnaryMatch += 1;
