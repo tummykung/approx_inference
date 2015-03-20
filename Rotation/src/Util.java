@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -5,14 +6,21 @@ import java.util.Random;
 public class Util {
   // not really necessary; can be replaced by Arrays.deepToString
   public static String intArrayPrettyPrint(int[] array) {
+    ArrayList<Integer> ints = new ArrayList<Integer>();
+    for (int i = 0; i < array.length; i++) {
+      ints.add(array[i]);
+    }
+    return  intArrayPrettyPrint(ints);
+  }
+  public static String intArrayPrettyPrint(ArrayList<Integer> array) {
     String output = "";
     output += "[";
-    for (int i = 0; i < array.length - 1; i++) {
-      int j = array[i];
+    for (int i = 0; i < array.size() - 1; i++) {
+      int j = array.get(i);
       output += j + ", ";
     }
     // the last one: no trailing command and space
-    int j = array[array.length - 1];
+    int j = array.get(array.size() - 1);
     output += j;
     output += "]";
     return output;

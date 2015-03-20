@@ -8,13 +8,11 @@ import fig.prob.SampleUtils;
 public class GenerateData {
   
 
-  public static Pair<ArrayList<Example>, Params> generateDataSpeech(
-      double lambda1,
-      double lambda2,
-      double alpha,
+  public static ArrayList<AlignmentExample> generateDataSpeech(
       ArrayList<String> words
     ) throws Exception {
 
+    ArrayList<AlignmentExample> examples = new ArrayList<AlignmentExample>();
     // generate a set A of lowercase English characters
     char A[] = new char['z'- 'a' + 1];
     int j = 0;
@@ -32,11 +30,11 @@ public class GenerateData {
         // generate z
         zs.add("B-" + c);
         String z = "I-" + c;
-        int num_additional_I_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, lambda1);
+        int num_additional_I_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Global.lambda1);
         for (int k = 0; k < num_additional_I_repeats; k++) {
           zs.add(z);
         }
-        int num_additional_O_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, lambda2);
+        int num_additional_O_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Global.lambda2);
         for (int k = 0; k < num_additional_O_repeats; k++) {
           zs.add("O");
         }
@@ -50,7 +48,7 @@ public class GenerateData {
         if(z.charAt(0) == 'B' || z.charAt(0) == 'I') {
           // B-c -> generate c with prob 1 - alpha, and uniform with prob alpha
           double prob = Main.randomizer.nextDouble();
-          if(prob < alpha) {
+          if(prob < Global.alpha) {
             c = z.charAt(2);
           } else {
             // select any character at random
@@ -61,21 +59,19 @@ public class GenerateData {
           c = A[Main.randomizer.nextInt(A.length)];
         }
       }
-      Example example = new IndirectSupervisionExample<Character, Character, String>(xs, ys, zs);
+      examples.add(new AlignmentExample(xs, ys, zs));
     }
 
-    System.exit(0);
-    
-    return null;
+    return examples;
   }
 
-  public static Pair<ArrayList<Example>, Params> generateData() throws Exception {
+  public static ArrayList<FullSupervisionExample> generateData(Params params) throws Exception {
     // return[n][0] = x is int[] and return[n][1] = y is also int[]
     // and n is the num sample iterator
 
-    ArrayList<Example> data;
+    ArrayList<FullSupervisionExample> data;
     LogInfo.begin_track("generate_data");
-    data = new ArrayList<Example>();
+    data = new ArrayList<FullSupervisionExample>();
     // given parameters, generate data according to a log-linear model
     // fully supervised:
     // p_{theta}(z | x) = 1/Z(theta; x) * exp(theta' * phi(x, z))
@@ -93,44 +89,16 @@ public class GenerateData {
     if (Main.sentenceLength <= 0) {
       throw new Exception("Please specify sentenceLength");
     }
-    Params params = new Params(Main.rangeX, Main.rangeY);
-
-     for (int a = 0; a <= Main.rangeZ; a++)
-       for (int b = 0; b <= Main.rangeZ; b++)
-       {
-         if(a == b) {
-           params.transitions[a][b] = 15;
-         } else if (Math.abs(a - b) <= 1) {
-           params.transitions[a][b] = 5;
-         } else {
-           params.transitions[a][b] = 0;
-         }
-       }
-
-     for (int a = 0; a <= Main.rangeZ; a++)
-       for (int c = 0; c <= Main.rangeX; c++) {
-         if(a == c) {
-           params.emissions[a][c] = 20;
-         } else if (Math.abs(a - c) <= 1) {
-           params.emissions[a][c] = 5;
-         } else {
-           params.emissions[a][c] = 0;
-         }
-       }
 
     for (int n = 0; n < Main.numSamples; n++) {
-      ArrayList<Integer> x = new ArrayList<Integer>();
+      int[] x = new int[Main.sentenceLength];
       for(int i = 0; i < Main.sentenceLength; i++)
-        x.add(Util.randInt(0, Main.rangeX));
+        x[i] = Util.randInt(0, Main.rangeX);
 
       ForwardBackward modelForEachX = ModelAndLearning.getForwardBackward(x, params);
       modelForEachX.infer();
       int[] seq = modelForEachX.sample(Main.randomizer);
-      ArrayList<Integer> seqArray = new ArrayList<Integer>();
-      for (int j = 0; j < seq.length; j++) {
-        seqArray.add(seq[j]);
-      }
-      Example example = new FullSupervisionExample<Integer, Integer>(x, seqArray);
+      FullSupervisionExample example = new FullSupervisionExample(x, seq);
       data.add(example);
     }
 
@@ -141,6 +109,6 @@ public class GenerateData {
       }
     }
     LogInfo.end_track("generate_data");
-    return new Pair<ArrayList<Example>, Params>(data, params);
+    return data;
   }
 }

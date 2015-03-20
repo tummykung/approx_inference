@@ -12,15 +12,23 @@ public class ModelAndLearning {
   private double eta; // stepsize
 
   public ModelAndLearning() {
-    
-  }
 
+  }
+  public Params trainFullSupervision(ArrayList<FullSupervisionExample> trainData) throws Exception {
+    // cast
+    ArrayList<Example> castedTrainData = new ArrayList<Example>();
+    for (FullSupervisionExample example : trainData) {
+      castedTrainData.add(example);
+    }
+    return train(castedTrainData);
+  }
+  
   public Params train(ArrayList<Example> trainData) throws Exception {
     LogInfo.begin_track("train");
     if (trainData.size() == 0) {
       throw new Exception("Need at least one train data sample!");
     }
-    Main.sentenceLength = trainData.get(0).getInput().size();
+    Main.sentenceLength = trainData.get(0).getInput().length;
     // for now, assume all sentences are of 
     // the same length. TODO: generalize this.
     double delta = 10e-4;
@@ -35,9 +43,9 @@ public class ModelAndLearning {
       Example sample = trainData.get(permutedOrder[exampleCounter]);
       counter = exampleCounter + 1;
 //      int[] y = sample.getOutput();
-      ArrayList z = sample.getOutput(); // different semantics, used for fully_supervised case
-      ArrayList x = sample.getInput();
-      int L = x.size();
+      int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
+      int[] x = sample.getInput();
+      int L = x.length;
       Params gradient = new Params(Main.rangeX, Main.rangeY);
 
       if (Main.fullySupervised) {
@@ -45,12 +53,12 @@ public class ModelAndLearning {
         Params positiveGradient = new Params(Main.rangeX, Main.rangeY);
         for(int i = 0; i < L; i++) {
           if (i < L - 1)
-            positiveGradient.transitions[z.get(i)][z.get(i + 1)] += 1;
-          positiveGradient.emissions[z.get(i)][x.get(i)] += 1;
+            positiveGradient.transitions[z[i]][z[i + 1]] += 1;
+          positiveGradient.emissions[z[i]][x[i]] += 1;
         }
         if (Main.extraVerbose) {
-          LogInfo.logs("x:\t" + Arrays.toString(x));
-          LogInfo.logs("z:\t" + Arrays.toString(z));
+          LogInfo.logs("x:\t" + Fmt.D(x));
+          LogInfo.logs("z:\t" + Fmt.D(z));
           positiveGradient.print("positiveGradient");
         }
 
@@ -154,9 +162,9 @@ public class ModelAndLearning {
     }
   }
   
-  public static ForwardBackward getForwardBackward(ArrayList<Integer> x, Params params) {
-    int L = x.size();
-    double[][] nodeWeights = new double[x.size()][Main.rangeZ + 1];
+  public static ForwardBackward getForwardBackward(int[] x, Params params) {
+    int L = x.length;
+    double[][] nodeWeights = new double[x.length][Main.rangeZ + 1];
     double[][] edgeWeights = new double[Main.rangeZ + 1][Main.rangeZ + 1];
     for (int a = 0; a <= Main.rangeZ; a++)
       for (int b = 0; b <= Main.rangeZ; b++) {
@@ -164,7 +172,7 @@ public class ModelAndLearning {
       }
     for (int i = 0; i < L; i++)
       for (int a = 0; a <= Main.rangeZ; a++)
-        nodeWeights[i][a] = Math.exp(params.emissions[a][x.get()]);
+        nodeWeights[i][a] = Math.exp(params.emissions[a][x[i]]);
     return new ForwardBackward(edgeWeights, nodeWeights);
   }
   
@@ -173,9 +181,9 @@ public class ModelAndLearning {
     int count = 0;
     for (Example sample : trainData) {
       count += 1;
-      int[] y = (int[]) sample.getOutput();
-      int[] z = (int[]) sample.getOutput(); // different semantics
-      int[] x = (int[]) sample.getInput();
+      int[] y = sample.getOutput();
+      int[] z = sample.getOutput(); // different semantics
+      int[] x = sample.getInput();
 
       ForwardBackward the_model_for_each_x = getForwardBackward(x, params);
       the_model_for_each_x.infer();
@@ -189,11 +197,19 @@ public class ModelAndLearning {
     }
     return totalLogLikelihood/(double)count;
   }
-  
+
   public int[] predict(int[] x, Params params) {
     ForwardBackward modelForX = getForwardBackward(x, params);
     modelForX.infer();
     return modelForX.getViterbi();
+  }
+  public Report testFullSupervision(ArrayList<FullSupervisionExample> testData, Params params) throws Exception {
+ // cast
+    ArrayList<Example> castedTrainData = new ArrayList<Example>();
+    for (FullSupervisionExample example : testData) {
+      castedTrainData.add(example);
+    }
+    return test(castedTrainData, params);
   }
   public Report test(ArrayList<Example> testData, Params params) throws Exception {
     int totalExactMatch = 0;
@@ -202,12 +218,13 @@ public class ModelAndLearning {
 
     for (Example example : testData) {
       int[] x = example.getInput();
-      int[] z = example.getOutput();
-      int[] predictedZ = predict(z, params);
+      example.getOutput();
+      int[] y = (int[]) example.getOutput();
+      int[] predictedZ = predict(y, params);
       boolean exactMatch = true;
       if (x.length != predictedZ.length)
         exactMatch = false;
-      int minLenth = Math.min(x.length, z.length);
+      int minLenth = Math.min(x.length, y.length);
       for(int i = 0; i < minLenth; i++) {
         if(x[i] == predictedZ[i]) {
           totalUnaryMatch += 1;
@@ -249,7 +266,7 @@ public class ModelAndLearning {
       if(i < z.length - 1) {
         theSum += params.transitions[z[i]][z[i + 1]];
       }
-      theSum += params.emissions[z[i]][x[i]];
+      theSum += params.emissions[z[i]][(int) x[i]];
     }
     double toReturn = theSum - logZ;
     assert toReturn <= 0;

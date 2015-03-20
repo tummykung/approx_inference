@@ -2,14 +2,14 @@ import java.util.ArrayList;
 
 import util.Pair;
 
-public class Reader {
-  public static Pair<ArrayList<Example>, ArrayList<Example>> read(String source) throws Exception {
-    ArrayList<Example> trainData = new ArrayList<Example>();
-    ArrayList<Example> testData = new ArrayList<Example>();
+public class FullSupervisionReader {
+  public static Pair<ArrayList<FullSupervisionExample>, ArrayList<FullSupervisionExample>> read(String source) throws Exception {
+    ArrayList<FullSupervisionExample> trainData = new ArrayList<FullSupervisionExample>();
+    ArrayList<FullSupervisionExample> testData = new ArrayList<FullSupervisionExample>();
 
     String state = "ground";
     String subState = "ground";
-    Example example = new Example(null, null); // will be half-built after seeing an input
+    FullSupervisionExample example = new FullSupervisionExample(null, null); // will be half-built after seeing an input
     for (String line : fig.basic.IOUtils.readLinesHard(source)) {
       if (Main.debugVerbose) {
         System.out.println(line);
@@ -44,7 +44,7 @@ public class Reader {
           for(int i = 0; i < things.length - 1; i++) {
             input[i] = Integer.parseInt(things[i + 1]);
           }
-          example = new Example(input, null);
+          example = new FullSupervisionExample(input, null);
         } else if (things[0].equals("output") && subState.equals("input")) {
           subState = "ground";
           int[] output = new int[things.length - 1];
@@ -60,6 +60,6 @@ public class Reader {
         }
       }
     }
-    return new Pair<ArrayList<Example>, ArrayList<Example>>(trainData, testData);
+    return new Pair<ArrayList<FullSupervisionExample>, ArrayList<FullSupervisionExample>>(trainData, testData);
   }
 }
