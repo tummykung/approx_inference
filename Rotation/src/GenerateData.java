@@ -34,8 +34,8 @@ public class GenerateData {
         for (int k = 0; k < num_additional_I_repeats; k++) {
           zs.add(z);
         }
-        int num_additional_O_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Global.lambda2);
-        for (int k = 0; k < num_additional_O_repeats; k++) {
+        int num_O_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Global.lambda2);
+        for (int k = 0; k < num_O_repeats; k++) {
           zs.add("O");
         }
       }
@@ -45,7 +45,7 @@ public class GenerateData {
       for (String z : zs) {
         char c;
         if(z.charAt(0) == 'B' || z.charAt(0) == 'I') {
-          // B-c -> generate c with prob alpha, and uniform with prob 1 - alpha
+          // B-c or I-c -> generate c with prob alpha, and uniform with prob 1 - alpha
           double prob = Main.randomizer.nextDouble();
           if(prob < Global.alpha) {
             c = z.charAt(2);

@@ -49,7 +49,7 @@ public class Main implements Runnable {
     @Option(required=false) public static double eta0 = 0.3; // gradient descent initial step size
     @Option(required=false) public static int gradientDescentType = ADAGRAD;
     @Option(required=false) public static long numIters = 10; // the number of samples in approximate inference
-    @Option(required=false) public static double xi = 5.0; // the number of samples in approximate inference
+    @Option(required=false) public static double xi = 30.0; // the number of samples in approximate inference
     @Option(required=false) public static long seed;
     @Option(required=false) public static boolean usingAveragingMethod = true;
 
@@ -217,9 +217,9 @@ public class Main implements Runnable {
           ArrayList<AlignmentExample> trainData = new ArrayList<AlignmentExample>();
           ArrayList<AlignmentExample> testData = new ArrayList<AlignmentExample>();
           
-          Global.lambda1 = 1.0;
-          Global.lambda2 = 0.3;
-          Global.alpha = 0.9;
+          Global.lambda1 = 0.0; // num_additional_I_repeats ~ Poi(lambda1)
+          Global.lambda2 = 0.0; // num_O_repeats ~ Poi(lambda2)
+          Global.alpha = 1.0; // B-c or I-c -> generate c with prob alpha, and uniform with prob 1 - alpha
           ArrayList<String> words = WordReader.read(wordSource);
 //          ArrayList<String> words = new ArrayList<String>();
 //          words.add("test");
