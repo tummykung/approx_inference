@@ -289,13 +289,20 @@ public class ModelAndLearning {
       int[] x = example.getInput();
       example.getOutput();
       int[] y = (int[]) example.getOutput();
-      int[] predictedZ = predict(y, params);
+      int[] predictedY = predict(y, params);
+      
+      if(Main.predictionVerbose) {
+        LogInfo.logs(AlignmentExample.toStringHumanReadable(x, "x:\t\t", false));
+        LogInfo.logs(AlignmentExample.toStringHumanReadable(y, "y:\t\t", false));
+        LogInfo.logs(AlignmentExample.toStringHumanReadable(predictedY, "predictedY:\t", false));
+        LogInfo.logs("");
+      }
       boolean exactMatch = true;
-      if (x.length != predictedZ.length)
+      if (x.length != predictedY.length)
         exactMatch = false;
       int minLenth = Math.min(x.length, y.length);
       for(int i = 0; i < minLenth; i++) {
-        if(x[i] == predictedZ[i]) {
+        if(x[i] == predictedY[i]) {
           totalUnaryMatch += 1;
         } else
           exactMatch = false;
