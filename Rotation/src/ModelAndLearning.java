@@ -319,11 +319,11 @@ public class ModelAndLearning {
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);
       double logQ = logQ(y, z, params);
-      System.out.println("logQ = " + logQ);
+//      System.out.println("logQ = " + logQ);
       the_sum += Math.exp(logQ);
     }
-    System.out.println("xi = " + xi);
-    System.out.println("the_sum/M = " + the_sum/M);
+//    System.out.println("xi = " + xi);
+//    System.out.println("the_sum/M = " + the_sum/M);
     return Math.log(the_sum/M);
   }
 
@@ -344,7 +344,7 @@ public class ModelAndLearning {
     }
     
     if (exact_match) {
-      theSum += 1;
+      theSum += Math.exp(params.xi);
     }
     double toReturn = theSum - logZ;
     assert toReturn <= 0;
