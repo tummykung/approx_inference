@@ -318,20 +318,18 @@ public class ModelAndLearning {
     double the_sum = 0;
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);
-      double logQ = logQ(y, z, params);
+      double logQ = logQ(y, z, params, xi);
 //      System.out.println("logQ = " + logQ);
       the_sum += Math.exp(logQ);
     }
-//    System.out.println("xi = " + xi);
-//    System.out.println("the_sum/M = " + the_sum/M);
     return Math.log(the_sum/M);
   }
 
-  public double logQ(int[] y, int[] z, Params params) throws Exception {
+  public double logQ(int[] y, int[] z, Params params, double xi) throws Exception {
     double theSum = 0.0;
     int L = y.length;
     double logZ = L * Math.log(Main.alphabetSize) +
-        Math.log(1 - (1 - Math.exp(params.xi))/Math.pow(Main.alphabetSize, L));
+        Math.log(1 - (1 - Math.exp(xi))/Math.pow(Main.alphabetSize, L));
     // exact match
     boolean exact_match = true;
     int[] denotation = AlignmentExample.denotation(z);
@@ -344,9 +342,11 @@ public class ModelAndLearning {
     }
     
     if (exact_match) {
-      theSum += Math.exp(params.xi);
+      theSum += Math.exp(xi);
+    } else {
+      theSum += 1;
     }
-    double toReturn = theSum - logZ;
+    double toReturn = Math.log(theSum) - logZ;
     assert toReturn <= 0;
     return toReturn;
   }
@@ -406,13 +406,6 @@ public class ModelAndLearning {
         }
       }
     }
-//    if(approx_inference == Main.EXACT) {
-//      for(int[] z : new CartesianProduct(indicesForZ)) {
-//        double[] the_phi = phi(z, x);
-//        for (int k = 0; k < d; k++)
-//          total[k] += p(z, x, theta) * the_phi[k];
-//      }
-//    }
     return totalParams;
   }
 

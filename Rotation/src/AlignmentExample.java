@@ -82,11 +82,15 @@ public class AlignmentExample extends IndirectSupervisionExample {
     }
   }
   
-  public static String toStringHumanReadable(int[] characters, String name) throws Exception {
+  public static String toStringHumanReadable(int[] characters, String name, boolean isZ) throws Exception {
     StringBuilder b = new StringBuilder();
     b.append(name + " ");
     for (int i = 0; i < characters.length; i++) {
-      b.append((char)('a' + characters[i]));
+      if(isZ) {
+        b.append(convertIntToString(characters[i]));
+      } else {
+        b.append((char)('a' + characters[i]));
+      }
       if (i < characters.length - 1)
         b.append(" ");
     }
@@ -94,7 +98,7 @@ public class AlignmentExample extends IndirectSupervisionExample {
   }
   public String toStringHumanReadable() throws Exception {
     StringBuilder b = new StringBuilder();
-    b.append(toStringHumanReadable(x, "input"));
+    b.append(toStringHumanReadable(x, "input", false));
     b.append("\n");
     b.append("denotation ");
     for (int i = 0; i < denotation.length; i++) {
@@ -103,9 +107,9 @@ public class AlignmentExample extends IndirectSupervisionExample {
         b.append(" ");
     }
     b.append("\n");
-    b.append(toStringHumanReadable(z, "latent"));
+    b.append(toStringHumanReadable(z, "latent", true));
     b.append("\n");
-    b.append(toStringHumanReadable(y, "output"));
+    b.append(toStringHumanReadable(y, "output", false));
     return b.toString();
   }
   
