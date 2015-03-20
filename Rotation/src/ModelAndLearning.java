@@ -12,17 +12,35 @@ public class ModelAndLearning {
   private double eta; // stepsize
 
   public ModelAndLearning() {
-
+    // do nothing
   }
+
   public Params trainFullSupervision(ArrayList<FullSupervisionExample> trainData) throws Exception {
-    // cast
-    ArrayList<Example> castedTrainData = new ArrayList<Example>();
-    for (FullSupervisionExample example : trainData) {
-      castedTrainData.add(example);
-    }
-    return train(castedTrainData);
+    return train(castFromFullSupervisionToExample(trainData));
   }
   
+  public ArrayList<Example> castFromFullSupervisionToExample(ArrayList<FullSupervisionExample> lst) {
+    ArrayList<Example> ret = new ArrayList<Example>();
+    for (FullSupervisionExample example : lst) {
+      ret.add(example);
+    }
+    return ret;
+  }
+  public ArrayList<Example> castFromIndirectSupervisionToExample(ArrayList<IndirectSupervisionExample> lst) {
+    ArrayList<Example> ret = new ArrayList<Example>();
+    for (IndirectSupervisionExample example : lst) {
+      ret.add(example);
+    }
+    return ret;
+  }
+  public ArrayList<Example> castFromAlignmentExampleToExample(ArrayList<AlignmentExample> lst) {
+    ArrayList<Example> ret = new ArrayList<Example>();
+    for (AlignmentExample example : lst) {
+      ret.add(example);
+    }
+    return ret;
+  }
+
   public Params train(ArrayList<Example> trainData) throws Exception {
     LogInfo.begin_track("train");
     if (trainData.size() == 0) {
@@ -30,7 +48,6 @@ public class ModelAndLearning {
     }
     Main.sentenceLength = trainData.get(0).getInput().length;
     // for now, assume all sentences are of 
-    // the same length. TODO: generalize this.
     double delta = 10e-4;
     // returns: learned_theta
     Params thetaHat = new Params(Main.rangeX, Main.rangeY);
@@ -42,14 +59,101 @@ public class ModelAndLearning {
     for (int exampleCounter = 0; exampleCounter < trainData.size(); exampleCounter++) {
       Example sample = trainData.get(permutedOrder[exampleCounter]);
       counter = exampleCounter + 1;
-//      int[] y = sample.getOutput();
-      int[] z = sample.getOutput(); // different semantics, used for fully_supervised case
+      int[] y = sample.getOutput();
       int[] x = sample.getInput();
       int L = x.length;
       Params gradient = new Params(Main.rangeX, Main.rangeY);
 
       if (Main.fullySupervised) {
         //initialize
+        Params positiveGradient = new Params(Main.rangeX, Main.rangeY);
+        for(int i = 0; i < L; i++) {
+          if (i < L - 1)
+            positiveGradient.transitions[y[i]][y[i + 1]] += 1;
+          positiveGradient.emissions[y[i]][x[i]] += 1;
+        }
+        if (Main.extraVerbose) {
+          LogInfo.logs("x:\t" + Fmt.D(x));
+          LogInfo.logs("y:\t" + Fmt.D(y));
+          positiveGradient.print("positiveGradient");
+        }
+
+        ForwardBackward theModelForEachX = getForwardBackward(x, thetaHat);
+        theModelForEachX.infer();
+
+        Params expectationCapPhi = expectationCapPhi(x, thetaHat, theModelForEachX);
+
+        if (Main.extraVerbose) {
+          expectationCapPhi.print("expectationCapPhi");
+        }
+        // subtract
+        for (int a = 0; a <= Main.rangeZ; a++)
+          for (int b = 0; b <= Main.rangeZ; b++)
+            gradient.transitions[a][b] = positiveGradient.transitions[a][b] - expectationCapPhi.transitions[a][b];
+        for (int a = 0; a <= Main.rangeZ; a++)
+          for (int c = 0; c <= Main.rangeX; c++)
+            gradient.emissions[a][c] = positiveGradient.emissions[a][c] - expectationCapPhi.emissions[a][c];
+      } else {
+        throw new Exception("Then we shouldn't be here.");
+      }
+
+      GradientUpdate.update(thetaHat, thetaHatAverage, gradient, st, counter, Main.eta0);
+
+      if ((Main.logLikelihoodVerbose && counter % 100 == 0) || (counter == trainData.size())) {
+        double averageLogLikelihood;
+        if (Main.usingAveragingMethod) {
+          averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHatAverage);
+        } else {
+          averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHat);
+        }
+        LogInfo.logs(
+            counter + 
+            ": trainDatasetAverageLogLikelihood:\t" +
+            Fmt.D(averageLogLikelihood)
+        );
+      }
+      if (Main.learningVerbose) {
+        LogInfo.logs(counter + ": thetaHatAverage");
+        thetaHatAverage.print("thetaHatAverage");
+      }
+    }
+    LogInfo.end_track("train");
+    if (Main.usingAveragingMethod) {
+      return thetaHatAverage;
+    } else {
+      return thetaHat;
+    }
+  }
+  
+  public Params trainIndirectSupervision(ArrayList<AlignmentExample> trainData) throws Exception {
+    LogInfo.begin_track("train");
+    if (trainData.size() == 0) {
+      throw new Exception("Need at least one train data sample!");
+    }
+    ArrayList<Example> trainDataCasted = castFromAlignmentExampleToExample(trainData);
+
+    double delta = 10e-4;
+    // returns: learned_theta
+    Params thetaHat = new Params(Main.rangeX, Main.rangeY);
+    Params thetaHatAverage = new Params(Main.rangeX, Main.rangeY);
+    Params st = new Params(Main.rangeX, Main.rangeY, delta); // for AdaGrad
+    int counter = 0;
+    int[] permutedOrder = SampleUtils.samplePermutation(Main.randomizer, trainData.size());
+    
+    for (int exampleCounter = 0; exampleCounter < trainData.size(); exampleCounter++) {
+      AlignmentExample sample = trainData.get(permutedOrder[exampleCounter]);
+      counter = exampleCounter + 1;
+      int[] y = sample.getOutput();
+      int[] z = sample.getLatent();
+      int[] x = sample.getInput();
+      int L = x.length;
+      
+      System.out.println(sample.toStringHumanReadable());
+      System.exit(0);
+      Params gradient = new Params(Main.rangeX, Main.rangeY);
+
+      if (!Main.fullySupervised) {
+        // initialize
         Params positiveGradient = new Params(Main.rangeX, Main.rangeY);
         for(int i = 0; i < L; i++) {
           if (i < L - 1)
@@ -78,69 +182,17 @@ public class ModelAndLearning {
           for (int c = 0; c <= Main.rangeX; c++)
             gradient.emissions[a][c] = positiveGradient.emissions[a][c] - expectationCapPhi.emissions[a][c];
       } else {
-        // -- Indirect supervision -- 
-//        Z = calculate_Z(x, theta_hat)
-//        if approx_inference == 1:
-//          E_grad_phi = expectation_phi(x, theta_hat, Z, approx_inference)
-//          for z in itertools.product(Z0, Z1, Z2):
-//            z = np.array(z)
-//            gradient = phi(z, x)
-//            grad_log_Z = (gradient - E_grad_phi)
-//
-//            if xi is None:
-//              the_q_component = q(y, z)
-//            else:
-//              the_q_component = q_relaxed(y, z, xi)
-//            new_grad += grad_log_Z * p(z, x, theta_hat) * the_q_component
-//
-//          new_grad /= real_p(y, x, theta_hat, xi)
-//        elif approx_inference == 2:
-//          new_grad = difference_between_expectations(x, y, theta_hat, Z, xi, M)
+        throw new Exception("Then we shouldn't be here.");
       }
 
-      if (Main.gradientDescentType == Main.DECREASING_STEP_SIZES) {
-        eta = Main.eta0/Math.sqrt(counter);
-      } else if (Main.gradientDescentType == Main.CONSTANT_STEP_SIZES){
-        eta = Main.eta0;
-      }
-      // if AdaGrad we'll do at the level of update itself
-
-      if (Main.extraVerbose) {
-        gradient.print("gradient");
-        thetaHat.print("thetaHat");
-        thetaHatAverage.print("thetaHatAverage");
-      }
-
-      for (int a = 0; a <= Main.rangeZ; a++)
-        for (int b = 0; b <= Main.rangeZ; b++) {
-          if (Main.gradientDescentType == Main.ADAGRAD){
-            st.transitions[a][b] += gradient.transitions[a][b] * gradient.transitions[a][b];
-            thetaHat.transitions[a][b] += Main.eta0/Math.sqrt(st.transitions[a][b]) * gradient.transitions[a][b];
-          } else
-            thetaHat.transitions[a][b] += eta * gradient.transitions[a][b];
-          thetaHatAverage.transitions[a][b] =
-              (counter - 1)/(double)counter*thetaHatAverage.transitions[a][b] +
-              1/(double)counter*thetaHat.transitions[a][b];
-        }
-      for (int a = 0; a <= Main.rangeZ; a++)
-        for (int c = 0; c <= Main.rangeX; c++) {
-          if (Main.gradientDescentType == Main.ADAGRAD){
-            st.emissions[a][c] += gradient.emissions[a][c] * gradient.emissions[a][c];
-            thetaHat.emissions[a][c] += Main.eta0/Math.sqrt(st.emissions[a][c]) * gradient.emissions[a][c];
-          } else
-            thetaHat.emissions[a][c] += eta * gradient.emissions[a][c];
-          thetaHatAverage.emissions[a][c] =
-              (counter - 1)/(double)counter*thetaHatAverage.emissions[a][c] +
-              1/(double)counter*thetaHat.emissions[a][c];
-        }
-
+      GradientUpdate.update(thetaHat, thetaHatAverage, gradient, st, counter, Main.eta0);
 
       if ((Main.logLikelihoodVerbose && counter % 100 == 0) || (counter == trainData.size())) {
         double averageLogLikelihood;
         if (Main.usingAveragingMethod) {
-          averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHatAverage);
+          averageLogLikelihood = calculateAverageLogLikelihood(trainDataCasted, thetaHatAverage);
         } else {
-          averageLogLikelihood = calculateAverageLogLikelihood(trainData, thetaHat);
+          averageLogLikelihood = calculateAverageLogLikelihood(trainDataCasted, thetaHat);
         }
         LogInfo.logs(
             counter + 
@@ -152,7 +204,6 @@ public class ModelAndLearning {
         LogInfo.logs(counter + ": thetaHatAverage");
         thetaHatAverage.print("thetaHatAverage");
       }
-
     }
     LogInfo.end_track("train");
     if (Main.usingAveragingMethod) {
@@ -161,7 +212,7 @@ public class ModelAndLearning {
       return thetaHat;
     }
   }
-  
+
   public static ForwardBackward getForwardBackward(int[] x, Params params) {
     int L = x.length;
     double[][] nodeWeights = new double[x.length][Main.rangeZ + 1];
@@ -175,7 +226,8 @@ public class ModelAndLearning {
         nodeWeights[i][a] = Math.exp(params.emissions[a][x[i]]);
     return new ForwardBackward(edgeWeights, nodeWeights);
   }
-  
+
+
   public double calculateAverageLogLikelihood(ArrayList<Example> trainData, Params params) throws Exception {
     double totalLogLikelihood = 0.0;
     int count = 0;
@@ -204,13 +256,23 @@ public class ModelAndLearning {
     return modelForX.getViterbi();
   }
   public Report testFullSupervision(ArrayList<FullSupervisionExample> testData, Params params) throws Exception {
- // cast
+    // cast
     ArrayList<Example> castedTrainData = new ArrayList<Example>();
     for (FullSupervisionExample example : testData) {
       castedTrainData.add(example);
     }
     return test(castedTrainData, params);
   }
+  public Report testIndirectSupervision(ArrayList<AlignmentExample> testData, Params params) throws Exception {
+    // cast
+    ArrayList<Example> castedTrainData = new ArrayList<Example>();
+    for (AlignmentExample example : testData) {
+      castedTrainData.add(example);
+    }
+    return test(castedTrainData, params);
+  }
+
+  
   public Report test(ArrayList<Example> testData, Params params) throws Exception {
     int totalExactMatch = 0;
     int totalUnaryMatch = 0;

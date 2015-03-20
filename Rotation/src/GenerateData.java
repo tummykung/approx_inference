@@ -56,11 +56,14 @@ public class GenerateData {
           xs.add(c);
         } else if (z.charAt(0) == 'O') {
           c = A[Main.randomizer.nextInt(A.length)];
+          xs.add(c);
         }
       }
-      AlignmentExample t = new AlignmentExample(xs, ys, zs);
-      System.out.println(t);
-      examples.add(t);
+      AlignmentExample alignment = new AlignmentExample(xs, ys, zs);
+      if (Main.debugVerbose) {
+        LogInfo.logs(alignment.toStringHumanReadable());
+      }
+      examples.add(alignment);
     }
 
     return examples;

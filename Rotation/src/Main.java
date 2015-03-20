@@ -67,9 +67,9 @@ public class Main implements Runnable {
     // for data generating
     @Option(required=false) public static int numSamples = 400;
     @Option(required=false) public static int sentenceLength;
-    @Option(required=false) public static int rangeX = 5;
-    @Option(required=false) public static int rangeY = 5;
-    @Option(required=false) public static int rangeZ = 5;
+    @Option(required=false) public static int rangeX = alphabetSize;
+    @Option(required=false) public static int rangeY = alphabetSize;
+    @Option(required=false) public static int rangeZ = 2 * alphabetSize + 1;
 
     public static Random randomizer;
 
@@ -97,7 +97,6 @@ public class Main implements Runnable {
       randomizer = new Random(Main.seed);
       if (model.equals("LinearChainCRF")) {
         ModelAndLearning theModel = new ModelAndLearning();
-
         if (fullySupervised) {
           ArrayList<FullSupervisionExample> trainData = new ArrayList<FullSupervisionExample>();
           ArrayList<FullSupervisionExample> testData = new ArrayList<FullSupervisionExample>();
@@ -164,7 +163,6 @@ public class Main implements Runnable {
             }
             System.out.println("----------END:testData----------");
 
-
             System.out.println("experimentName:\t" + experimentName);
             System.out.println("model:\t" + model);
             System.out.println("eta0:\t" + eta0);
@@ -218,14 +216,75 @@ public class Main implements Runnable {
             }
           LogInfo.end_track("testReport");
         } else {
-          // not fully supervised
+          // indirectly supervised
+          ArrayList<AlignmentExample> trainData = new ArrayList<AlignmentExample>();
+          ArrayList<AlignmentExample> testData = new ArrayList<AlignmentExample>();
+          
           Global.lambda1 = 1.0;
           Global.lambda2 = 0.3;
           Global.alpha = 0.9;
           ArrayList<String> words = new ArrayList<String>();
           words.add("test");
           words.add("what");
-          GenerateData.generateDataSpeech(words);
+          ArrayList<AlignmentExample> data = GenerateData.generateDataSpeech(words);
+          double percentTrained = 0.80;
+          int numTrained = (int) Math.round(percentTrained * data.size());
+          for(int i = 0; i < data.size(); i++) {
+            if(i < numTrained) {
+              trainData.add(data.get(i));
+            } else {
+              testData.add(data.get(i));
+            }
+          }
+          
+          if (debugVerbose) {
+            System.out.println("----------BEGIN:trainData----------");
+            for(Example example : trainData) {
+              System.out.println(example);
+            }
+            System.out.println("----------END:trainData----------");
+            System.out.println("----------BEGIN:testData----------");
+            for(Example example : testData) {
+              System.out.println(example);
+            }
+            System.out.println("----------END:testData----------");
+
+            System.out.println("experimentName:\t" + experimentName);
+            System.out.println("model:\t" + model);
+            System.out.println("eta0:\t" + eta0);
+            System.out.println("gradientDescentType:\t" + gradientDescentType);
+            System.out.println("numIters:\t" + numIters);
+            System.out.println("learningVerbose:\t" + learningVerbose);
+            System.out.println("stateVerbose:\t" + stateVerbose);
+            System.out.println("debugVerbose:\t" + debugVerbose);
+            System.out.println("logLikelihoodVerbose:\t" + logLikelihoodVerbose);
+            System.out.println("predictionVerbose:\t" + predictionVerbose);
+            System.out.println("sanityCheck:\t" + sanityCheck);
+            System.out.println("num_samples:\t" + numSamples);
+            System.out.println("sentenceLength:\t" + sentenceLength);
+            System.out.println("rangeX:\t" + rangeX);
+            System.out.println("rangeY:\t" + rangeY);
+            System.out.println("rangeZ:\t" + rangeZ);
+          }
+
+          Params learnedParams = theModel.trainIndirectSupervision(trainData);
+          learnedParams.print("learnedParams");
+
+          LogInfo.begin_track("trainReport");
+            Report learnerTrainReport = theModel.testIndirectSupervision(trainData, learnedParams);
+            
+            LogInfo.begin_track("learner");
+            learnerTrainReport.print("train.learner");
+            LogInfo.end_track("learner");
+          LogInfo.end_track("trainReport");
+
+          LogInfo.begin_track("testReport");
+            LogInfo.begin_track("learner");
+            Report learnerReport = theModel.testIndirectSupervision(testData, learnedParams);
+            learnerReport.print("test.learner");
+            LogInfo.end_track("learner");
+
+          LogInfo.end_track("testReport");
         }
 
       } else {

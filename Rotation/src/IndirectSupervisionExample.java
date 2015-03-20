@@ -1,4 +1,4 @@
-public class IndirectSupervisionExample<X, Y, Z> extends Example{
+public class IndirectSupervisionExample extends Example{
   protected int[] z;
 
   public IndirectSupervisionExample(int[] x, int[] y, int[] z) {
