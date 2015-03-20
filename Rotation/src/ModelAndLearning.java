@@ -134,9 +134,9 @@ public class ModelAndLearning {
 
     double delta = 10e-4;
     // returns: learned_theta
-    Params thetaHat = new Params(Main.rangeX, Main.rangeY);
-    Params thetaHatAverage = new Params(Main.rangeX, Main.rangeY);
-    Params st = new Params(Main.rangeX, Main.rangeY, delta); // for AdaGrad
+    Params thetaHat = new Params(Main.rangeX, Main.rangeZ);
+    Params thetaHatAverage = new Params(Main.rangeX, Main.rangeZ);
+    Params st = new Params(Main.rangeX, Main.rangeZ, delta); // for AdaGrad
     int counter = 0;
     int[] permutedOrder = SampleUtils.samplePermutation(Main.randomizer, trainData.size());
     
@@ -147,14 +147,13 @@ public class ModelAndLearning {
       int[] z = sample.getLatent();
       int[] x = sample.getInput();
       int L = x.length;
-      
-      System.out.println(sample.toStringHumanReadable());
-      System.exit(0);
-      Params gradient = new Params(Main.rangeX, Main.rangeY);
+
+
+      Params gradient = new Params(Main.rangeX, Main.rangeZ);
 
       if (!Main.fullySupervised) {
         // initialize
-        Params positiveGradient = new Params(Main.rangeX, Main.rangeY);
+        Params positiveGradient = new Params(Main.rangeX, Main.rangeZ);
         for(int i = 0; i < L; i++) {
           if (i < L - 1)
             positiveGradient.transitions[z[i]][z[i + 1]] += 1;
@@ -215,7 +214,7 @@ public class ModelAndLearning {
 
   public static ForwardBackward getForwardBackward(int[] x, Params params) {
     int L = x.length;
-    double[][] nodeWeights = new double[x.length][Main.rangeZ + 1];
+    double[][] nodeWeights = new double[L][Main.rangeZ + 1];
     double[][] edgeWeights = new double[Main.rangeZ + 1][Main.rangeZ + 1];
     for (int a = 0; a <= Main.rangeZ; a++)
       for (int b = 0; b <= Main.rangeZ; b++) {
@@ -306,17 +305,36 @@ public class ModelAndLearning {
     );
   }
 
-  public double logIndirectP(int[] y, int[] x, Params params, double xi, ForwardBackward fwbw) {
-    int M = 1000;
+  public double logIndirectP(int[] y, int[] x, Params params, double xi, ForwardBackward fwbw) throws Exception {
+    int M = 100;
+    double the_sum = 0;
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);
+      the_sum += logQ(y, z, params);
     }
 
-    return 0.9;
+    return the_sum/M;
   }
-  
-  public double logQ(int[] y, int[] z, Params params, double logZ) {
+
+  public double logQ(int[] y, int[] z, Params params) throws Exception {
     double theSum = 0.0;
+    int L = y.length;
+    double logZ = L * Math.log(Main.alphabetSize) +
+        Math.log(1 - (1 - Math.exp(params.xi))/Math.pow(Main.alphabetSize, L));
+    // exact match
+    boolean exact_match = true;
+    int[] denotation = AlignmentExample.denotation(z);
+    if(denotation.length != L)
+      exact_match = false;
+
+    for(int i = 0; exact_match && i < L; i++) {
+      if(denotation[i] != y[i])
+        exact_match = false;
+    }
+    
+    if (exact_match) {
+      theSum += 1;
+    }
     double toReturn = theSum - logZ;
     assert toReturn <= 0;
     return toReturn;

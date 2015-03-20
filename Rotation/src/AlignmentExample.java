@@ -50,8 +50,8 @@ public class AlignmentExample extends IndirectSupervisionExample {
     return convertXToInt(lst);
   }
   
-  public int[] denotation() {
-    // only output things that start with 'B', which is characterized
+  public static int[] denotation(int[] z) {
+ // only output things that start with 'B', which is characterized
     // the index being in between (inclusive) 0 and alphabetSize
     ArrayList<Integer> to_ret = new ArrayList<Integer>();
     for(int i = 0; i < z.length; i++) {
@@ -66,6 +66,10 @@ public class AlignmentExample extends IndirectSupervisionExample {
     return ret;
   }
   
+  private int[] denotation() {
+    return denotation(z);
+  }
+  
   public static String convertIntToString(int i) throws Exception {
     if (i > 2 * Main.alphabetSize || i < 0) {
       throw new Exception("Out of range, try again");
@@ -78,17 +82,20 @@ public class AlignmentExample extends IndirectSupervisionExample {
     }
   }
   
-  public String toStringHumanReadable() throws Exception {
+  public static String toStringHumanReadable(int[] characters, String name) throws Exception {
     StringBuilder b = new StringBuilder();
-    b.append("input ");
-    for (int i = 0; i < x.length; i++) {
-      b.append((char)('a' + x[i]));
-      if (i < x.length - 1)
+    b.append(name + " ");
+    for (int i = 0; i < characters.length; i++) {
+      b.append((char)('a' + characters[i]));
+      if (i < characters.length - 1)
         b.append(" ");
     }
+    return b.toString();
+  }
+  public String toStringHumanReadable() throws Exception {
+    StringBuilder b = new StringBuilder();
+    b.append(toStringHumanReadable(x, "input"));
     b.append("\n");
-
-    
     b.append("denotation ");
     for (int i = 0; i < denotation.length; i++) {
       b.append((char)('a' + denotation[i]));
@@ -96,21 +103,9 @@ public class AlignmentExample extends IndirectSupervisionExample {
         b.append(" ");
     }
     b.append("\n");
-
-    b.append("latent ");
-    for (int i = 0; i < z.length; i++) {
-      b.append(convertIntToString(z[i]));
-      if (i < z.length - 1)
-        b.append(" ");
-    }
+    b.append(toStringHumanReadable(z, "latent"));
     b.append("\n");
-
-    b.append("output ");
-    for (int i = 0; i < y.length; i++) {
-      b.append((char)('a' + y[i]));
-      if (i < y.length - 1)
-        b.append(" ");
-    }
+    b.append(toStringHumanReadable(y, "output"));
     return b.toString();
   }
   
