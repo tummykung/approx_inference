@@ -326,7 +326,8 @@ public class ModelAndLearning {
   }
 
   public double logIndirectP(int[] y, int[] x, Params params, double xi, ForwardBackward fwbw) throws Exception {
-    int M = 20;
+    int M = 500; // number of samples to calculate p(y | x) from the formula
+    // p(y | x) = E[q(y | z)] where z is drawn iid from p(z | x)
     double the_sum = 0;
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);

@@ -49,7 +49,7 @@ public class Main implements Runnable {
     @Option(required=false) public static double eta0 = 0.3; // gradient descent initial step size
     @Option(required=false) public static int gradientDescentType = ADAGRAD;
     @Option(required=false) public static long numIters = 10; // the number of samples in approximate inference
-    @Option(required=false) public static double xi = 10.0; // the number of samples in approximate inference
+    @Option(required=false) public static double xi = 5.0; // the number of samples in approximate inference
     @Option(required=false) public static long seed;
     @Option(required=false) public static boolean usingAveragingMethod = true;
 

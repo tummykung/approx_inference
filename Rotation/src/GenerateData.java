@@ -45,7 +45,7 @@ public class GenerateData {
       for (String z : zs) {
         char c;
         if(z.charAt(0) == 'B' || z.charAt(0) == 'I') {
-          // B-c -> generate c with prob 1 - alpha, and uniform with prob alpha
+          // B-c -> generate c with prob alpha, and uniform with prob 1 - alpha
           double prob = Main.randomizer.nextDouble();
           if(prob < Global.alpha) {
             c = z.charAt(2);
