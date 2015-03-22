@@ -52,6 +52,7 @@ public class Main implements Runnable {
     @Option(required=false) public static double xi = 30.0; // the number of samples in approximate inference
     @Option(required=false) public static long seed;
     @Option(required=false) public static boolean usingAveragingMethod = true;
+    @Option(required=false) public static long nusmSamplesToComputeQ = 500;
 
     // (optional) flags
     @Option(required=false) public static boolean learningVerbose = false;
