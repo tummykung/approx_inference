@@ -35,7 +35,8 @@ public class Main implements Runnable {
      *      to compute the importance weight.
      * 3 = Normalized importance sampling by using the model weight as the proposal distribution
      */
-    @Option(required=true) public static long inferType;
+    @Option(required=true, gloss="0 = exact, 1-3 appprox infer. See code for more detail.")
+    public static long inferType;
     @Option(required=true) public static boolean fullySupervised;
 
     // (optional) flag for generating data
@@ -47,12 +48,13 @@ public class Main implements Runnable {
     @Option(required=false) public static String experimentName = "SCRATCH";
     @Option(required=false) public static String model = "LinearChainCRF";
     @Option(required=false) public static double eta0 = 0.3; // gradient descent initial step size
-    @Option(required=false) public static int gradientDescentType = ADAGRAD;
+    @Option(required=false, gloss="0 = constant step size, 1 = decreasing, 2 = AdaGrad")
+    public static int gradientDescentType = ADAGRAD;
     @Option(required=false) public static long numIters = 10; // the number of samples in approximate inference
     @Option(required=false) public static double xi = 30.0; // the number of samples in approximate inference
     @Option(required=false) public static long seed;
     @Option(required=false) public static boolean usingAveragingMethod = true;
-    @Option(required=false) public static long nusmSamplesToComputeQ = 500;
+    @Option(required=false) public static long numSamplesToComputeQ = 500;
 
     // (optional) flags
     @Option(required=false) public static boolean learningVerbose = false;
@@ -69,6 +71,14 @@ public class Main implements Runnable {
     @Option(required=false) public static int rangeX = alphabetSize;
     @Option(required=false) public static int rangeY = alphabetSize;
     @Option(required=false) public static int rangeZ = 2 * alphabetSize + 1;
+    
+    // for experiment
+    @Option(required=false, gloss="num_additional_I_repeats ~ Poi(lambda1)")
+    public static double lambda1 = 0;
+    @Option(required=false, gloss="num_O_repeats ~ Poi(lambda2)")
+    public static double lambda2 = 0; 
+    @Option(required=false, gloss="B-c or I-c -> generate c with prob alpha, and uniform with prob 1 - alpha")
+    public static double alpha = 1; 
 
     public static Random randomizer;
 
@@ -217,14 +227,8 @@ public class Main implements Runnable {
           // indirectly supervised
           ArrayList<AlignmentExample> trainData = new ArrayList<AlignmentExample>();
           ArrayList<AlignmentExample> testData = new ArrayList<AlignmentExample>();
-          
-          Global.lambda1 = 0.0; // num_additional_I_repeats ~ Poi(lambda1)
-          Global.lambda2 = 0.0; // num_O_repeats ~ Poi(lambda2)
-          Global.alpha = 1.0; // B-c or I-c -> generate c with prob alpha, and uniform with prob 1 - alpha
+
           ArrayList<String> words = WordReader.read(wordSource);
-//          ArrayList<String> words = new ArrayList<String>();
-//          words.add("test");
-//          words.add("what");
           ArrayList<AlignmentExample> data = GenerateData.generateDataSpeech(words);
           double percentTrained = 0.80;
           int numTrained = (int) Math.round(percentTrained * data.size());

@@ -12,12 +12,13 @@ java -ea -Xmx5g -cp .:lib/fig.jar:lib/stanford-corenlp-3.5.1.jar:classes/default
  -fullySupervised False\
  -predictionVerbose True\
  -wordSource ../data/100_words.txt\
- -numIters 20\
  -inferType 0\
- -sentenceLength 5\
  -debugVerbose False\
  -stateVerbose False\
  -generateData False\
  -numSamples 3000\
- -gradientDescentType 2
+ -gradientDescentType 2\
+ -lambda1 0.0\
+ -lambda2 0.0\
+ -alpha 1.0
  set +x # unset verbose

@@ -30,11 +30,11 @@ public class GenerateData {
         // generate z
         zs.add("B-" + c);
         String z = "I-" + c;
-        int num_additional_I_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Global.lambda1);
+        int num_additional_I_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Main.lambda1);
         for (int k = 0; k < num_additional_I_repeats; k++) {
           zs.add(z);
         }
-        int num_O_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Global.lambda2);
+        int num_O_repeats = (int) SampleUtils.samplePoisson(Main.randomizer, Main.lambda2);
         for (int k = 0; k < num_O_repeats; k++) {
           zs.add("O");
         }
@@ -47,7 +47,7 @@ public class GenerateData {
         if(z.charAt(0) == 'B' || z.charAt(0) == 'I') {
           // B-c or I-c -> generate c with prob alpha, and uniform with prob 1 - alpha
           double prob = Main.randomizer.nextDouble();
-          if(prob < Global.alpha) {
+          if(prob < Main.alpha) {
             c = z.charAt(2);
           } else {
             // select any character at random
