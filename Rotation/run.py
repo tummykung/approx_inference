@@ -30,14 +30,14 @@ from glob import glob
 import shlex
 import threading
 import time
-include="lib/fig.jar:lib/stanford-corenlp-3.5.1.jar"
+include="src/lib/fig.jar:src/lib/stanford-corenlp-3.5.1.jar"
 prefix="state/execs"
 
 if options.compile:
-  call(["rm", "-f"] + glob("*.class"))
-  call(["javac", "-cp", "src:%s" % include, "Main.java"])
-  call(["mkdir", "-p", "classes/%s" % name])
-  call(["mv"] + glob("*.class") + ["classes/%s/" % name])
+  call(["rm", "-f"] + glob("src/*.class"))
+  call(["javac", "-cp", "src:%s" % include, "src/Main.java"])
+  call(["mkdir", "-p", "src/classes/%s" % name])
+  call(["mv"] + glob("src/*.class") + ["src/classes/%s/" % name])
   call(["mkdir", "-p", "%s/%s" % (prefix, name)])
 
 if options.run:
