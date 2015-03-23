@@ -35,13 +35,13 @@ prefix="state/execs"
 
 if options.compile:
   call(["rm", "-f"] + glob("*.class"))
-  call(["javac", "-cp", ".:%s" % include, "Main.java"])
+  call(["javac", "-cp", "src:%s" % include, "Main.java"])
   call(["mkdir", "-p", "classes/%s" % name])
   call(["mv"] + glob("*.class") + ["classes/%s/" % name])
   call(["mkdir", "-p", "%s/%s" % (prefix, name)])
 
 if options.run:
-  call_args = ["java", "-Xmx%dg" % options.memory, "-cp .:%s:classes/%s" % (include, name), 
+  call_args = ["java", "-Xmx%dg" % options.memory, "-cp src:%s:classes/%s" % (include, name), 
                "Main", "-execPoolDir %s/%s" % (prefix, name)]
   if options.java_help:
     call_args.append("-help")
