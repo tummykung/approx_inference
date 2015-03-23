@@ -374,7 +374,11 @@ public class ModelAndLearning {
     if(denotation.length != L)
       exact_match = false;
 
-    for(int i = 0; exact_match && i < L; i++) {
+    int search_length = L;
+    if(search_length > y.length) {
+      search_length = y.length;
+    }
+    for(int i = 0; exact_match && i < search_length; i++) {
       if(denotation[i] != y[i])
         exact_match = false;
     }
