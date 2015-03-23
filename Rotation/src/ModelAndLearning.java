@@ -335,13 +335,17 @@ public class ModelAndLearning {
     double the_sum = 0;
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);
-      double logQ = logQExpFamily(y, z, params, xi);
+      double logQ;
+      if(Main.usingXi)
+        logQ = logQExpFamily(y, z, params, xi);
+      else
+        logQ = logQ(y, z, params);
       the_sum += Math.exp(logQ);
     }
     return Math.log(the_sum/M);
   }
   
-  public double logQ(int[] y, int[] z, Params params, double xi) throws Exception {
+  public double logQ(int[] y, int[] z, Params params) throws Exception {
     // q(y | z) = I[y = [[z]]]
     boolean exact_match = true;
     int[] denotation = AlignmentExample.denotation(z);
@@ -409,6 +413,17 @@ public class ModelAndLearning {
     assert toReturn <= 0;
     return toReturn;
   }
+  
+  public Params phi(int[] z, int[] x) {
+    Params output = new Params(Main.rangeX, Main.rangeZ);
+    for(int i = 0; i < z.length; i++) {
+      if(i < z.length - 1) {
+        output.transitions[z[i]][z[i + 1]] += 1;
+      }
+      output.emissions[z[i]][(int) x[i]] += 1;
+    }
+    return output;
+  }
 
   public Params expectationCapPhi(int[] x, Params params, ForwardBackward fwbw) {
     Params totalParams = new Params(Main.rangeX, Main.rangeZ);
@@ -467,16 +482,22 @@ public class ModelAndLearning {
 
       for(int i = 0; i < M; i++) {
         int[] z = fwbw.sample(Main.randomizer);
-        double logQ = logQExpFamily(y, z, params, Main.xi);
+        double logQ;
+        if(Main.usingXi)
+          logQ = logQExpFamily(y, z, params, Main.xi);
+        else
+          logQ = logQ(y, z, params);
         double w = Math.exp(logQ);
-        Params the_phi = params;
+//        LogInfo.logs("w = " + Fmt.D(w));
+        Params the_phi = phi(z, x);
+//        the_phi.print("the_phi");
         totalw += w;
 //        total1 += w * the_phi;
 //        total2 += the_phi;
         for (int a = 0; a < Main.rangeZ; a++)
           for (int b = 0; b < Main.rangeZ; b++) {
-            total1.transitions[a][b] =+ w * the_phi.transitions[a][b];
-            total2.transitions[a][b] =+ the_phi.transitions[a][b];
+            total1.transitions[a][b] += w * the_phi.transitions[a][b];
+            total2.transitions[a][b] += the_phi.transitions[a][b];
           }
         for (int a = 0; a < Main.rangeZ; a++)
           for (int c = 0; c < Main.rangeX; c++) {
@@ -487,11 +508,21 @@ public class ModelAndLearning {
 
       for (int a = 0; a < Main.rangeZ; a++)
         for (int b = 0; b < Main.rangeZ; b++)
-          output.transitions[a][b] = total1.transitions[a][b]/totalw - total2.transitions[a][b]/M;
+        {
+          output.transitions[a][b] = total1.transitions[a][b]/totalw - total2.transitions[a][b]/(double)M;
+//          LogInfo.logs("total1.transitions[a][b]/totalw = " + Fmt.D(total1.transitions[a][b]/totalw));
+//          LogInfo.logs("total2.transitions[a][b] = " + Fmt.D(total2.transitions[a][b]));
+//          LogInfo.logs("total2.transitions[a][b]/M = " + Fmt.D(total2.transitions[a][b]/(double)M));
+//          LogInfo.logs("total1.transitions[a][b] = " + Fmt.D(total1.transitions[a][b]));
+//          LogInfo.logs("total2.transitions[a][b] = " + Fmt.D(total2.transitions[a][b]));
+//          LogInfo.logs("total1.transitions[a][b]/totalw = " + Fmt.D(total1.transitions[a][b]/totalw));
+        }
 
       for (int a = 0; a < Main.rangeZ; a++)
         for (int c = 0; c < Main.rangeX; c++)
-          output.emissions[a][c] = total1.emissions[a][c]/totalw - total2.emissions[a][c]/M;
+          output.emissions[a][c] = total1.emissions[a][c]/totalw - total2.emissions[a][c]/(double)M;
+      
+//      output.print("output");
       return output;
   }
 }
