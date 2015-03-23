@@ -270,6 +270,12 @@ public class Main implements Runnable {
             System.out.println("rangeZ:\t" + rangeZ);
           }
 
+          Execution.putOutput("xi", xi);
+          Execution.putOutput("lambda1", lambda1);
+          Execution.putOutput("lambda2", lambda2);
+          Execution.putOutput("alpha", alpha);
+          Execution.putOutput("trainData.size()", trainData.size());
+          Execution.putOutput("testData.size()", testData.size());
           Params learnedParams = theModel.trainIndirectSupervision(trainData);
           learnedParams.print("learnedParams");
 
@@ -278,13 +284,15 @@ public class Main implements Runnable {
             
             LogInfo.begin_track("learner");
             learnerTrainReport.print("train.learner");
+            Execution.putOutput("train.learner.averageLogLikelihood", learnerTrainReport.averageLogLikelihood);
             LogInfo.end_track("learner");
           LogInfo.end_track("trainReport");
 
           LogInfo.begin_track("testReport");
             LogInfo.begin_track("learner");
-            Report learnerReport = theModel.testIndirectSupervision(testData, learnedParams);
-            learnerReport.print("test.learner");
+            Report learnerTestReport = theModel.testIndirectSupervision(testData, learnedParams);
+            Execution.putOutput("test.learner.averageLogLikelihood", learnerTestReport.averageLogLikelihood);
+            learnerTestReport.print("test.learner");
             LogInfo.end_track("learner");
 
           LogInfo.end_track("testReport");

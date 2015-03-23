@@ -18,8 +18,8 @@ java -ea -Xmx5g -cp .:lib/fig.jar:lib/stanford-corenlp-3.5.1.jar:classes/default
  -generateData False\
  -numSamples 3000\
  -gradientDescentType 2\
- -lambda1 0.0\
- -lambda2 0.0\
- -alpha 1.0\
- -xi 10
+ -lambda1 $1\
+ -lambda2 $2\
+ -alpha $3\
+ -xi $4
  set +x # unset verbose

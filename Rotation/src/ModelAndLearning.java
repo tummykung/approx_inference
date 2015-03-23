@@ -331,21 +331,44 @@ public class ModelAndLearning {
     double the_sum = 0;
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);
-      double logQ = logQ(y, z, params, xi);
+      double logQ = logQExpFamily(y, z, params, xi);
 //      System.out.println("logQ = " + logQ);
       the_sum += Math.exp(logQ);
     }
     return Math.log(the_sum/M);
   }
-
+  
   public double logQ(int[] y, int[] z, Params params, double xi) throws Exception {
-    double theSum = 0.0;
-    int L = y.length;
-    double logZ = L * Math.log(Main.alphabetSize) +
-        Math.log(1 - (1 - Math.exp(xi))/Math.pow(Main.alphabetSize, L));
-    // exact match
+    // q(y | z) = I[y = [[z]]]
     boolean exact_match = true;
     int[] denotation = AlignmentExample.denotation(z);
+    int L = denotation.length;
+
+    if(denotation.length != y.length)
+      exact_match = false;
+
+    for(int i = 0; exact_match && i < L; i++) {
+      if(denotation[i] != y[i])
+        exact_match = false;
+    }
+
+    if (exact_match) {
+      return 0;
+    } else {
+      return Double.NEGATIVE_INFINITY;
+    }
+  }
+
+  public double logQExpFamily(int[] y, int[] z, Params params, double xi) throws Exception {
+    double theSum = 0.0;
+    int[] denotation = AlignmentExample.denotation(z);
+    int L = denotation.length;
+
+    double logZ = (L + 1) * Math.log(Main.alphabetSize) +
+        Math.log(1 - (1 - Math.exp(xi))/Math.pow(Main.alphabetSize, L + 1));
+
+    // exact match
+    boolean exact_match = true;
     if(denotation.length != L)
       exact_match = false;
 
