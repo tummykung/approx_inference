@@ -11,15 +11,15 @@ java -ea -Xmx5g -cp src:src/lib/fig.jar:src/lib/stanford-corenlp-3.5.1.jar:src/c
  -model LinearChainCRF\
  -fullySupervised False\
  -predictionVerbose True\
- -wordSource data/100_words.txt\
+ -wordSource data/$1\
  -inferType 0\
  -debugVerbose False\
  -stateVerbose False\
  -generateData False\
  -numSamples 3000\
  -gradientDescentType 2\
- -lambda1 $1\
- -lambda2 $2\
- -alpha $3\
- -xi $4
+ -lambda1 $2\
+ -lambda2 $3\
+ -alpha $4\
+ -xi $5
  set +x # unset verbose
