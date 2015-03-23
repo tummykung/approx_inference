@@ -55,6 +55,7 @@ public class Main implements Runnable {
     @Option(required=false) public static long seed;
     @Option(required=false) public static boolean usingAveragingMethod = true;
     @Option(required=false) public static long numSamplesToComputeQ = 500;
+    @Option(required=false) public static int numSamplesToComputeGradients = 10;
 
     // (optional) flags
     @Option(required=false) public static boolean learningVerbose = false;

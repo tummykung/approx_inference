@@ -153,37 +153,41 @@ public class ModelAndLearning {
       Params gradient = new Params(Main.rangeX, Main.rangeZ);
 
       if (!Main.fullySupervised) {
-        // initialize
-        Params positiveGradient = new Params(Main.rangeX, Main.rangeZ);
-        for(int i = 0; i < L; i++) {
-          if (i < L - 1)
-            positiveGradient.transitions[z[i]][z[i + 1]] += 1;
-          positiveGradient.emissions[z[i]][x[i]] += 1;
+        if(Main.inferType == 1) {
+          // initialize
+          Params positiveGradient = new Params(Main.rangeX, Main.rangeZ);
+          for(int i = 0; i < L; i++) {
+            if (i < L - 1)
+              positiveGradient.transitions[z[i]][z[i + 1]] += 1;
+            positiveGradient.emissions[z[i]][x[i]] += 1;
+          }
+          if (Main.extraVerbose) {
+            LogInfo.logs("x:\t" + Fmt.D(x));
+            LogInfo.logs("z:\t" + Fmt.D(z));
+            positiveGradient.print("positiveGradient");
+          }
+  
+          ForwardBackward theModelForEachX = getForwardBackward(x, thetaHat);
+          theModelForEachX.infer();
+  
+          Params expectationCapPhi = expectationCapPhi(x, thetaHat, theModelForEachX);
+  
+          if (Main.extraVerbose) {
+            expectationCapPhi.print("expectationCapPhi");
+          }
+          // subtract
+          for (int a = 0; a <= Main.rangeZ; a++)
+            for (int b = 0; b <= Main.rangeZ; b++)
+              gradient.transitions[a][b] = positiveGradient.transitions[a][b] - expectationCapPhi.transitions[a][b];
+          for (int a = 0; a <= Main.rangeZ; a++)
+            for (int c = 0; c <= Main.rangeX; c++)
+              gradient.emissions[a][c] = positiveGradient.emissions[a][c] - expectationCapPhi.emissions[a][c];
+        } else if(Main.inferType == 3) {
+          gradient = differenceBetweenExpectations(x, y, thetaHat, Main.numSamplesToComputeGradients);
         }
-        if (Main.extraVerbose) {
-          LogInfo.logs("x:\t" + Fmt.D(x));
-          LogInfo.logs("z:\t" + Fmt.D(z));
-          positiveGradient.print("positiveGradient");
-        }
-
-        ForwardBackward theModelForEachX = getForwardBackward(x, thetaHat);
-        theModelForEachX.infer();
-
-        Params expectationCapPhi = expectationCapPhi(x, thetaHat, theModelForEachX);
-
-        if (Main.extraVerbose) {
-          expectationCapPhi.print("expectationCapPhi");
-        }
-        // subtract
-        for (int a = 0; a <= Main.rangeZ; a++)
-          for (int b = 0; b <= Main.rangeZ; b++)
-            gradient.transitions[a][b] = positiveGradient.transitions[a][b] - expectationCapPhi.transitions[a][b];
-        for (int a = 0; a <= Main.rangeZ; a++)
-          for (int c = 0; c <= Main.rangeX; c++)
-            gradient.emissions[a][c] = positiveGradient.emissions[a][c] - expectationCapPhi.emissions[a][c];
       } else {
         throw new Exception("Then we shouldn't be here.");
-      }
+        }
 
       GradientUpdate.update(thetaHat, thetaHatAverage, gradient, st, counter, Main.eta0);
 
@@ -407,7 +411,7 @@ public class ModelAndLearning {
   }
 
   public Params expectationCapPhi(int[] x, Params params, ForwardBackward fwbw) {
-    Params totalParams = new Params(Main.rangeX, Main.rangeZ, Main.sentenceLength);
+    Params totalParams = new Params(Main.rangeX, Main.rangeZ);
     int L = x.length;
 
     if(Main.inferType == Main.EXACT) {
@@ -451,42 +455,43 @@ public class ModelAndLearning {
     return totalParams;
   }
 
-  public double differenceBetweenExpectations(
-      int[] x, int[] y, double[] theta, double Z) {
-//    TODO
-//    output = np.array([0.0, 0.0, 0.0, 0.0])
-//    total1 = np.array([0.0, 0.0, 0.0, 0.0])
-//    totalw = 0.0
-//    total2 = np.array([0.0, 0.0, 0.0, 0.0])
-//    # construct the probability
-//    the_probability = {}
-//    for x in itertools.product(X, X, X):
-//        # can't convert to tuple since can't hash array
-//        the_probability[x] = {}
-//
-//        for z in itertools.product(Z0, Z1, Z2):
-//            the_probability[x][z] = p(z, x, theta)
-//
-//    sampler = ConditionalSampling(the_probability)
-//
-//    for i in range(M):
-//        z = sampler.sample(x)
-//        z = np.array(z)
-//        # print "z: " + str(z)
-//        w = q_relaxed(y, z, xi)
-//        # print "w: " + str(w)
-//        the_phi = phi(z, x)
-//        # print "the_phi: " + str(the_phi)
-//        totalw += w
-//        total1 += w * the_phi
-//        total2 += the_phi
-//
-//    try:
-//        output = total1/totalw - total2/M
-//    except:
-//        output = np.array([0.0, 0.0, 0.0, 0.0])
-//
-//    return output
-    return 0.0;
+  public Params differenceBetweenExpectations(
+      int[] x, int[] y, Params params, int M) throws Exception {
+      Params output = new Params(Main.rangeX, Main.rangeZ);
+      Params total1 = new Params(Main.rangeX, Main.rangeZ);
+      double totalw = 0;
+      Params total2 = new Params(Main.rangeX, Main.rangeZ);
+
+      ForwardBackward fwbw = getForwardBackward(x, params);
+      fwbw.infer();
+
+      for(int i = 0; i < M; i++) {
+        int[] z = fwbw.sample(Main.randomizer);
+        double logQ = logQExpFamily(y, z, params, Main.xi);
+        double w = Math.exp(logQ);
+        Params the_phi = params;
+        totalw += w;
+//        total1 += w * the_phi;
+//        total2 += the_phi;
+        for (int a = 0; a < Main.rangeZ; a++)
+          for (int b = 0; b < Main.rangeZ; b++) {
+            total1.transitions[a][b] =+ w * the_phi.transitions[a][b];
+            total2.transitions[a][b] =+ the_phi.transitions[a][b];
+          }
+        for (int a = 0; a < Main.rangeZ; a++)
+          for (int c = 0; c < Main.rangeX; c++) {
+            total1.emissions[a][c] += w * the_phi.emissions[a][c];
+            total2.emissions[a][c] += the_phi.emissions[a][c];
+          }
+      }
+
+      for (int a = 0; a < Main.rangeZ; a++)
+        for (int b = 0; b < Main.rangeZ; b++)
+          output.transitions[a][b] = total1.transitions[a][b]/totalw - total2.transitions[a][b]/M;
+
+      for (int a = 0; a < Main.rangeZ; a++)
+        for (int c = 0; c < Main.rangeX; c++)
+          output.emissions[a][c] = total1.emissions[a][c]/totalw - total2.emissions[a][c]/M;
+      return output;
   }
 }
