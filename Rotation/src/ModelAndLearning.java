@@ -332,7 +332,6 @@ public class ModelAndLearning {
     for(int i = 0; i < M; i++) {
       int[] z = fwbw.sample(Main.randomizer);
       double logQ = logQExpFamily(y, z, params, xi);
-//      System.out.println("logQ = " + logQ);
       the_sum += Math.exp(logQ);
     }
     return Math.log(the_sum/M);
@@ -360,12 +359,15 @@ public class ModelAndLearning {
   }
 
   public double logQExpFamily(int[] y, int[] z, Params params, double xi) throws Exception {
-    double theSum = 0.0;
+    double logTheSum = 0.0;
     int[] denotation = AlignmentExample.denotation(z);
     int L = denotation.length;
 
-    double logZ = (L + 1) * Math.log(Main.alphabetSize) +
-        Math.log(1 - (1 - Math.exp(xi))/Math.pow(Main.alphabetSize, L + 1));
+    double logZ = xi + Math.log(
+        1
+        + Math.exp((L + 1)* Math.log(Main.alphabetSize) - xi)
+        - Math.exp(-xi)
+    );
 
     // exact match
     boolean exact_match = true;
@@ -378,11 +380,11 @@ public class ModelAndLearning {
     }
     
     if (exact_match) {
-      theSum += Math.exp(xi);
+      logTheSum += xi;
     } else {
-      theSum += 1;
+      logTheSum += 0;
     }
-    double toReturn = Math.log(theSum) - logZ;
+    double toReturn = logTheSum - logZ;
     assert toReturn <= 0;
     return toReturn;
   }
